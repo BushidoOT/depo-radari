@@ -5,7 +5,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v21",
+    page_title="Depo Radarı v22",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -358,7 +358,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Tomruk, maden direği, kağıtlık odun ve diğer emvaller için filtreli ihale takip ekranı.</p>
-        <p class="small-note">Bu prototip sadece yerel CSV dosyasını okur. Resmi siteye tekrar istek atmaz. v21: kalite ağırlıklı fırsat puanı eklendi.</p>
+        <p class="small-note">Bu prototip sadece yerel CSV dosyasını okur. Resmi siteye tekrar istek atmaz. v22: takip listesine gitme düzeltildi.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -601,10 +601,17 @@ def filtreleri_uygula(df: pd.DataFrame, filtreler: dict) -> pd.DataFrame:
     return sonuc
 
 
-def takip_filtrelerine_git(filtreler: dict):
+def takip_hedefini_uygula():
     """
-    Kaydedilmiş takip filtresini sol menü filtrelerine basar ve sayfayı yeniler.
+    Streamlit'te bir filtre kutusu oluşturulduktan sonra aynı çalıştırmada o kutunun
+    session_state değeri değiştirilemez. Bu yüzden takip kartına basınca önce hedef filtre
+    saklanır, sayfa yenilenir, filtre kutuları çizilmeden önce burada uygulanır.
     """
+    hedef = st.session_state.pop("takip_hedef_filtre_v22", None)
+
+    if not hedef:
+        return
+
     key_map = {
         "arama": "arama_v7",
         "bolge": "bolge_v7",
@@ -618,9 +625,17 @@ def takip_filtrelerine_git(filtreler: dict):
     }
 
     for takip_key, widget_key in key_map.items():
-        st.session_state[widget_key] = filtreler.get(takip_key, "Tümü")
+        st.session_state[widget_key] = hedef.get(takip_key, "Tümü")
 
-    st.session_state["takip_uygulandi_v17"] = True
+    st.session_state["takip_uygulandi_v22"] = True
+
+
+def takip_filtrelerine_git(filtreler: dict):
+    """
+    Kaydedilmiş takip filtresine gitmek için hedef filtreyi saklar ve sayfayı yeniler.
+    Asıl uygulama, filtre kutuları çizilmeden önce takip_hedefini_uygula() içinde yapılır.
+    """
+    st.session_state["takip_hedef_filtre_v22"] = filtreler
     st.rerun()
 
 
@@ -951,9 +966,9 @@ def takip_listesi_panosu(df: pd.DataFrame):
     with st.expander("📌 Takip listesi ve alarm şartları", expanded=False):
         st.caption("Mevcut filtreyi kaydedebilir, fiyat/puan/miktar şartı ekleyebilir ve sonra listedeki takibe tek tuşla gidebilirsin.")
 
-        if st.session_state.get("takip_uygulandi_v17", False):
+        if st.session_state.get("takip_uygulandi_v22", False):
             st.success("Takip filtresi uygulandı.")
-            st.session_state["takip_uygulandi_v17"] = False
+            st.session_state["takip_uygulandi_v22"] = False
 
         mevcut_filtreler = aktif_filtreleri_al()
         mevcut_ozet = filtre_ozet_metni(mevcut_filtreler)
@@ -2177,6 +2192,7 @@ if df_raw.empty:
 paket = lisans_kontrolu()
 
 df = hazirla(df_raw)
+takip_hedefini_uygula()
 sonuc = filtrele(df, paket)
 
 st.caption(f"Okunan dosya: **{okunacak_csv}** — Filtreler kademeli çalışır; seçilen bölgeye göre diğer seçenekler daralır.")
