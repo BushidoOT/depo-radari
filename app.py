@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v26",
+    page_title="Depo Radarı v27",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -360,7 +360,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Tomruk, maden direği, kağıtlık odun ve diğer emvaller için filtreli ihale takip ekranı.</p>
-        <p class="small-note">Bu prototip sadece yerel CSV dosyasını okur. Resmi siteye tekrar istek atmaz. v26: kullanıcıya özel takip listesi eklendi.</p>
+        <p class="small-note">Bu prototip sadece yerel CSV dosyasını okur. Resmi siteye tekrar istek atmaz. v27: takip kodu tekrar çizilme hatası düzeltildi.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -384,36 +384,60 @@ def guvenli_dosya_eki(text: str) -> str:
 def takip_kullanici_kodu_al() -> str:
     """
     Public yayında herkesin aynı takip listesini görmemesi için takip listesi
-    kullanıcı koduna göre ayrılır. Gerçek üyelik sistemi gelene kadar geçici çözümdür.
+    kullanıcı koduna göre ayrılır.
+
+    V27 düzeltmesi:
+    Bu sidebar input sadece ana akışta bir kez çizilir.
+    Alt fonksiyonlar tekrar text_input oluşturmaya çalışmaz.
     """
-    if "takip_oturum_kodu_v26" not in st.session_state:
-        st.session_state["takip_oturum_kodu_v26"] = "misafir-" + str(uuid.uuid4())[:8]
+    if "takip_oturum_kodu_v27" not in st.session_state:
+        st.session_state["takip_oturum_kodu_v27"] = "misafir-" + str(uuid.uuid4())[:8]
 
     st.sidebar.markdown("### 📌 Takip")
+
     kod = st.sidebar.text_input(
         "Takip kodu",
-        value=st.session_state.get("takip_kullanici_kodu_v26", ""),
+        value=st.session_state.get("takip_kullanici_kodu_v27", ""),
         placeholder="Örn: yakup veya firma kodu",
         help="Aynı takipleri tekrar görmek için aynı kodu gir. Boş kalırsa geçici misafir takip listesi kullanılır.",
-        key="takip_kullanici_kodu_v26",
+        key="takip_kullanici_kodu_v27",
     )
 
     kod = str(kod or "").strip()
 
     if not kod:
-        kod = st.session_state["takip_oturum_kodu_v26"]
+        kod = st.session_state["takip_oturum_kodu_v27"]
         st.sidebar.caption("Geçici misafir takip listesi aktif.")
-
     else:
         st.sidebar.caption("Bu koda özel takip listesi aktif.")
+
+    st.session_state["aktif_takip_kodu_v27"] = kod
+    st.session_state["aktif_takip_dosyasi_v27"] = f"depo_radari_takip_listesi_{guvenli_dosya_eki(kod)}.json"
 
     return kod
 
 
 def takip_dosyasi_yolu() -> str:
-    kod = takip_kullanici_kodu_al()
-    ek = guvenli_dosya_eki(kod)
-    return f"depo_radari_takip_listesi_{ek}.json"
+    """
+    Takip dosya yolunu döndürür.
+    Burada sidebar text_input oluşturulmaz; böylece Streamlit duplicate widget hatası oluşmaz.
+    """
+    dosya = st.session_state.get("aktif_takip_dosyasi_v27")
+
+    if dosya:
+        return dosya
+
+    if "takip_oturum_kodu_v27" not in st.session_state:
+        st.session_state["takip_oturum_kodu_v27"] = "misafir-" + str(uuid.uuid4())[:8]
+
+    kod = st.session_state.get("aktif_takip_kodu_v27", st.session_state["takip_oturum_kodu_v27"])
+    dosya = f"depo_radari_takip_listesi_{guvenli_dosya_eki(kod)}.json"
+
+    st.session_state["aktif_takip_kodu_v27"] = kod
+    st.session_state["aktif_takip_dosyasi_v27"] = dosya
+
+    return dosya
+
 
 TEST_PREMIUM_KODU = "DEPO-PREMIUM-2026"
 
@@ -2281,6 +2305,8 @@ if df_raw.empty:
     st.stop()
 
 paket = lisans_kontrolu()
+
+takip_kullanici_kodu_al()
 
 df = hazirla(df_raw)
 takip_hedefini_uygula()
