@@ -5,7 +5,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v22",
+    page_title="Depo Radarı v23",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -358,7 +358,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Tomruk, maden direği, kağıtlık odun ve diğer emvaller için filtreli ihale takip ekranı.</p>
-        <p class="small-note">Bu prototip sadece yerel CSV dosyasını okur. Resmi siteye tekrar istek atmaz. v22: takip listesine gitme düzeltildi.</p>
+        <p class="small-note">Bu prototip sadece yerel CSV dosyasını okur. Resmi siteye tekrar istek atmaz. v23: lisans kodu secrets sistemine taşındı.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -406,72 +406,73 @@ def lisans_kodlari_oku():
     return kodlar
 
 
+def lisans_kodlarini_oku():
+    """
+    Yayında lisans kodları GitHub'a yazılmamalı.
+    Öncelik sırası:
+    1) Streamlit Secrets: PREMIUM_CODES
+    2) Ortam değişkeni: PREMIUM_CODES
+    3) Yerel geliştirme için depo_radari_lisanslar.txt
+    """
+    kodlar = set()
+
+    try:
+        secret_codes = st.secrets.get("PREMIUM_CODES", "")
+        if isinstance(secret_codes, str):
+            for kod in secret_codes.replace(",", "\n").splitlines():
+                kod = kod.strip()
+                if kod and not kod.startswith("#"):
+                    kodlar.add(kod)
+        elif isinstance(secret_codes, list):
+            for kod in secret_codes:
+                kod = str(kod).strip()
+                if kod:
+                    kodlar.add(kod)
+    except Exception:
+        pass
+
+    try:
+        import os
+        env_codes = os.environ.get("PREMIUM_CODES", "")
+        for kod in env_codes.replace(",", "\n").splitlines():
+            kod = kod.strip()
+            if kod and not kod.startswith("#"):
+                kodlar.add(kod)
+    except Exception:
+        pass
+
+    # Yerel kullanım için fallback. Public GitHub'da gerçek kod koyma.
+    try:
+        if os.path.exists(LISANS_DOSYASI):
+            with open(LISANS_DOSYASI, "r", encoding="utf-8") as f:
+                for satir in f:
+                    satir = satir.strip()
+                    if satir and not satir.startswith("#"):
+                        kodlar.add(satir)
+    except Exception:
+        pass
+
+    return kodlar
+
+
 def lisans_kontrolu():
-    st.sidebar.header("Lisans")
-    st.sidebar.caption("Premium özellikler lisans kodu ile açılır.")
+    st.sidebar.markdown("### 🔑 Lisans")
 
-    if "lisans_aktif_v13" not in st.session_state:
-        st.session_state["lisans_aktif_v13"] = False
-
-    if "lisans_kodu_v13" not in st.session_state:
-        st.session_state["lisans_kodu_v13"] = ""
-
-    if st.session_state["lisans_aktif_v13"]:
-        st.sidebar.success("Premium lisans aktif")
-        st.sidebar.caption("Premium özellikler açıldı.")
-
-        if st.sidebar.button("Lisansı kapat", key="lisans_kapat_v13"):
-            st.session_state["lisans_aktif_v13"] = False
-            st.session_state["lisans_kodu_v13"] = ""
-            st.rerun()
-
-        return {
-            "ad": "Premium",
-            "etiket": "Lisanslı kullanım",
-            "aciklama": "CSV yükleme, analiz görünümü ve rapor indirme açıktır. Temel ekranlar herkese açıktır.",
-            "premium": True,
-        }
-
-    kod = st.sidebar.text_input(
-        "Lisans kodu",
-        value="",
+    lisans_kodu = st.sidebar.text_input(
+        "Premium kod",
         type="password",
-        placeholder="Lisans kodunu gir",
-        key="lisans_input_v13"
+        placeholder="Premium kodunu gir",
+        key="lisans_kodu_v23",
     )
 
-    if st.sidebar.button("Aktifleştir", key="lisans_aktiflestir_v13"):
-        temiz_kod = kod.strip().upper()
+    kodlar = lisans_kodlarini_oku()
 
-        if temiz_kod in lisans_kodlari_oku():
-            st.session_state["lisans_aktif_v13"] = True
-            st.session_state["lisans_kodu_v13"] = temiz_kod
-            st.sidebar.success("Lisans aktif edildi.")
-            st.rerun()
-        else:
-            st.sidebar.error("Lisans kodu geçersiz.")
+    if lisans_kodu and lisans_kodu.strip() in kodlar:
+        st.sidebar.success("Premium aktif")
+        return "Premium"
 
-    with st.sidebar.expander("Test kodu", expanded=False):
-        st.code(TEST_PREMIUM_KODU)
-
-    return {
-        "ad": "Ücretsiz",
-        "etiket": "Temel kullanım",
-        "aciklama": "Temel filtreler, kartlar, tablo, öne çıkanlar ve ürün fırsat panosu açıktır. CSV yükleme, analiz ve rapor indirme premiumdur.",
-        "premium": False,
-    }
-
-
-def paket_bilgi_goster(paket):
-    st.markdown(
-        f"""
-        <div class="package-card">
-            <div class="package-title">Paket: {paket["ad"]} — {paket["etiket"]}</div>
-            <div class="package-sub">{paket["aciklama"]}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.sidebar.info("Ücretsiz paket")
+    return "Ücretsiz"
 
 
 def premium_aktif(paket):
