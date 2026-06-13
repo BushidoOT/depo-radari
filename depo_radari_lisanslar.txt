@@ -1,0 +1,6 @@
+# Depo Radari lisans kodlari
+# Test premium kodu:
+DEPO-PREMIUM-2026
+
+# Buraya satir satir yeni test lisans kodlari ekleyebilirsin.
+# Gercek yayinda lisans kontrolu dosyadan degil, sunucudan yapilacak.

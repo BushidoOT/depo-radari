@@ -1,0 +1,18 @@
+# Depo Radari Ayarlari
+# Bu dosyayi Not Defteri ile duzenleyebilirsin.
+# Cok yuksek degerlerle calistirma; resmi siteye yuk bindirmeyelim.
+
+# Veri cikan kac ihale bulunca dursun?
+MAX_IHALE_WITH_DATA=3
+
+# En fazla kac ihale adayini denesin?
+MAX_CANDIDATE_IHALE=20
+
+# Her veri cikan ihaleden en fazla kac parti ceksin?
+MAX_ISTIF_PER_IHALE=5
+
+# Her istek arasinda kac saniye beklesin?
+REQUEST_DELAY=3.0
+
+# Cikti CSV dosyasi
+OUTPUT_CSV=depo_radari_tum_ihaleler_guvenli_v3.csv

@@ -1,0 +1,18 @@
+{
+  "son_guncelleme": "2026-06-14 00:17:57",
+  "durum": "TAMAMLANDI",
+  "denenen_ihale": 10,
+  "veri_cikan_ihale": 8,
+  "yeni_kayit": 35,
+  "csv_once": 0,
+  "csv_sonra": 35,
+  "hata_sayisi": 0,
+  "sure_saniye": 141.7,
+  "output_csv": "depo_radari_tum_ihaleler_guvenli_v3.csv",
+  "ayarlar": {
+    "MAX_IHALE_WITH_DATA": 25,
+    "MAX_CANDIDATE_IHALE": 50,
+    "MAX_ISTIF_PER_IHALE": 7,
+    "REQUEST_DELAY": 3.0
+  }
+}
