@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: depo-radari
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "bash start.sh"
+    envVars:
+      - key: PREMIUM_CODES
+        sync: false
