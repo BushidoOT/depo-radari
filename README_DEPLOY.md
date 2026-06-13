@@ -1,13 +1,13 @@
-DEPO RADARI V18 / SITE V22
+DEPO RADARI V20 / SITE V24
 
 Duzeltme:
-- Takip listesindeki 'Bu takibe git' butonu duzeltildi.
-- Streamlit'te filtre kutulari olustuktan sonra ayni anda filtre state'i degistirilemiyordu.
-- Artik butona basinca hedef filtre saklanir, sayfa yenilenir, filtreler olusmadan once uygulanir.
+- Streamlit Cloud'daki hata duzeltildi.
+- Hata sebebi: premium_aktif fonksiyonu paket verisini dict bekliyordu ama V23'te lisans kontrolu string donduruyordu.
+- V24 ile premium_aktif hem string hem dict kabul eder.
 
-GitHub deploy icin:
-- app_v22.py dosyasinin adini app.py yapip GitHub'daki app.py ile degistir.
-- Ya da app_v22.py icerigini mevcut app.py icine kopyala.
-
-Yerel kullanim:
-- DEPO_RADARI_PANEL_V18.bat
+GitHub deploy:
+1) app_v24.py dosyasını indir.
+2) Adını app.py yap.
+3) GitHub'daki eski app.py ile değiştir.
+4) Commit changes.
+5) Streamlit otomatik yeniden deploy eder.

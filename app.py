@@ -5,7 +5,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v23",
+    page_title="Depo Radarı v24",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -358,7 +358,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Tomruk, maden direği, kağıtlık odun ve diğer emvaller için filtreli ihale takip ekranı.</p>
-        <p class="small-note">Bu prototip sadece yerel CSV dosyasını okur. Resmi siteye tekrar istek atmaz. v23: lisans kodu secrets sistemine taşındı.</p>
+        <p class="small-note">Bu prototip sadece yerel CSV dosyasını okur. Resmi siteye tekrar istek atmaz. v24: lisans tipi hatası düzeltildi.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -476,7 +476,18 @@ def lisans_kontrolu():
 
 
 def premium_aktif(paket):
-    return bool(paket.get("premium", False))
+    """
+    Eski sürümlerde paket dict idi, V23'te lisans_kontrolu string döndürüyordu.
+    Streamlit Cloud hatası buradan geliyordu: string üzerinde .get çalışıyordu.
+    Bu fonksiyon artık hem string hem dict kabul eder.
+    """
+    if isinstance(paket, str):
+        return paket == "Premium"
+
+    if isinstance(paket, dict):
+        return bool(paket.get("premium", False) if isinstance(paket, dict) else (str(paket) == "Premium")) or paket.get("ad") == "Premium"
+
+    return False
 
 
 def kilitli_ozellik(baslik, aciklama):
