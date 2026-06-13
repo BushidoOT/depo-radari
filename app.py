@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v27",
+    page_title="Depo Radarı v28",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -360,7 +360,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Tomruk, maden direği, kağıtlık odun ve diğer emvaller için filtreli ihale takip ekranı.</p>
-        <p class="small-note">Bu prototip sadece yerel CSV dosyasını okur. Resmi siteye tekrar istek atmaz. v27: takip kodu tekrar çizilme hatası düzeltildi.</p>
+        <p class="small-note">Bu prototip yerel CSV dosyasını okur. v28: GitHub Actions günlük veri güncelleme altyapısı hazırlandı.</p>
     </div>
     """,
     unsafe_allow_html=True
