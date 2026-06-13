@@ -1,11 +1,13 @@
 import os
 import glob
 import json
+import hashlib
+import uuid
 import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v25",
+    page_title="Depo Radarı v26",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -358,7 +360,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Tomruk, maden direği, kağıtlık odun ve diğer emvaller için filtreli ihale takip ekranı.</p>
-        <p class="small-note">Bu prototip sadece yerel CSV dosyasını okur. Resmi siteye tekrar istek atmaz. v25: paket bilgi fonksiyonu hatası düzeltildi.</p>
+        <p class="small-note">Bu prototip sadece yerel CSV dosyasını okur. Resmi siteye tekrar istek atmaz. v26: kullanıcıya özel takip listesi eklendi.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -369,6 +371,50 @@ st.markdown(
 
 LISANS_DOSYASI = "depo_radari_lisanslar.txt"
 TAKIP_DOSYASI = "depo_radari_takip_listesi.json"
+
+def guvenli_dosya_eki(text: str) -> str:
+    text = str(text or "").strip()
+
+    if not text:
+        text = "varsayilan"
+
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+
+def takip_kullanici_kodu_al() -> str:
+    """
+    Public yayında herkesin aynı takip listesini görmemesi için takip listesi
+    kullanıcı koduna göre ayrılır. Gerçek üyelik sistemi gelene kadar geçici çözümdür.
+    """
+    if "takip_oturum_kodu_v26" not in st.session_state:
+        st.session_state["takip_oturum_kodu_v26"] = "misafir-" + str(uuid.uuid4())[:8]
+
+    st.sidebar.markdown("### 📌 Takip")
+    kod = st.sidebar.text_input(
+        "Takip kodu",
+        value=st.session_state.get("takip_kullanici_kodu_v26", ""),
+        placeholder="Örn: yakup veya firma kodu",
+        help="Aynı takipleri tekrar görmek için aynı kodu gir. Boş kalırsa geçici misafir takip listesi kullanılır.",
+        key="takip_kullanici_kodu_v26",
+    )
+
+    kod = str(kod or "").strip()
+
+    if not kod:
+        kod = st.session_state["takip_oturum_kodu_v26"]
+        st.sidebar.caption("Geçici misafir takip listesi aktif.")
+
+    else:
+        st.sidebar.caption("Bu koda özel takip listesi aktif.")
+
+    return kod
+
+
+def takip_dosyasi_yolu() -> str:
+    kod = takip_kullanici_kodu_al()
+    ek = guvenli_dosya_eki(kod)
+    return f"depo_radari_takip_listesi_{ek}.json"
+
 TEST_PREMIUM_KODU = "DEPO-PREMIUM-2026"
 
 
@@ -536,24 +582,38 @@ def premium_ozellikler_panosu():
 
 
 def takip_listesi_oku():
-    if not os.path.exists(TAKIP_DOSYASI):
-        return []
+    dosya = takip_dosyasi_yolu()
 
     try:
-        with open(TAKIP_DOSYASI, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        if os.path.exists(dosya):
+            with open(dosya, "r", encoding="utf-8") as f:
+                data = json.load(f)
 
-        if isinstance(data, list):
-            return data
-
-        return []
+                if isinstance(data, list):
+                    return data
     except Exception:
-        return []
+        pass
+
+    # Eski tek dosyalı sistemden gelen takipleri kaybetmemek için
+    # sadece varsayılan/yerel durumda eski dosyadan okumaya çalışır.
+    try:
+        if os.path.exists(TAKIP_DOSYASI):
+            with open(TAKIP_DOSYASI, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+                if isinstance(data, list):
+                    return data
+    except Exception:
+        pass
+
+    return []
 
 
 def takip_listesi_yaz(liste):
+    dosya = takip_dosyasi_yolu()
+
     try:
-        with open(TAKIP_DOSYASI, "w", encoding="utf-8") as f:
+        with open(dosya, "w", encoding="utf-8") as f:
             json.dump(liste, f, ensure_ascii=False, indent=2)
     except Exception as e:
         st.warning(f"Takip listesi kaydedilemedi: {e}")
@@ -992,7 +1052,7 @@ def alarm_merkezi_panosu(df: pd.DataFrame):
 
 def takip_listesi_panosu(df: pd.DataFrame):
     with st.expander("📌 Takip listesi ve alarm şartları", expanded=False):
-        st.caption("Mevcut filtreyi kaydedebilir, fiyat/puan/miktar şartı ekleyebilir ve sonra listedeki takibe tek tuşla gidebilirsin.")
+        st.caption("Mevcut filtreyi kaydedebilir, alarm şartı ekleyebilir ve aynı takip koduyla kendi listen üzerinden geri dönebilirsin.")
 
         if st.session_state.get("takip_uygulandi_v22", False):
             st.success("Takip filtresi uygulandı.")
@@ -1000,6 +1060,9 @@ def takip_listesi_panosu(df: pd.DataFrame):
 
         mevcut_filtreler = aktif_filtreleri_al()
         mevcut_ozet = filtre_ozet_metni(mevcut_filtreler)
+        aktif_takip_dosyasi = takip_dosyasi_yolu()
+
+        st.info("Takip listesi artık kullanıcı takip koduna göre ayrılır. Aynı listeyi tekrar görmek için sol menüde aynı takip kodunu gir.")
 
         st.markdown(
             f"""

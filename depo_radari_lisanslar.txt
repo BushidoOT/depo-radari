@@ -1,2 +1,1 @@
-# Gerçek premium kodları public GitHub'a yazma.
-# Yayında Streamlit Secrets kullan.
+# Gerçek premium kodları public GitHub'a yazma. Yayında Streamlit Secrets kullan.
