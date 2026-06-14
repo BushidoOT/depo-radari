@@ -1368,6 +1368,29 @@ def kullanici_oturum_karti():
         st.rerun()
 
 
+
+def admin_panel_linki_goster():
+    """
+    Admin için kullanıcı panelini ayrı ekranda açar.
+    Bu fonksiyon eksik kaldığı için uygulama çöküyordu.
+    """
+    if st.session_state.get("giris_rol") != "admin":
+        return
+
+    st.sidebar.markdown(
+        """
+        <div class="side-title-card admin-card">
+            <div class="side-title">👥 Kullanıcı Paneli</div>
+            <div class="side-sub">Kullanıcı detayları ve yetkiler ayrı ekranda.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if st.sidebar.button("👥 Kullanıcı panelini aç", key="admin_link_btn", use_container_width=True):
+        query_param_ayarla(admin="1")
+        st.rerun()
+
 def kullanicilar_paneli():
     if st.session_state.get("giris_rol") != "admin":
         st.warning("Bu alan sadece yönetici için açık.")
