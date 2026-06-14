@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı Render v1",
+    page_title="Depo Radarı v30",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -15,7 +15,8 @@ st.set_page_config(
 
 CSV_DOSYA = "depo_radari_temiz_v6.csv"
 CSV_ONCELIKLI_DOSYALAR = [
-    "depo_radari_tum_ihaleler_guvenli_v3.csv",
+    "depo_radari_turkiye_tum_ihaleler.csv",
+        "depo_radari_tum_ihaleler_guvenli_v3.csv",
     "depo_radari_tum_ihaleler_guvenli_v2.csv",
     "depo_radari_tum_ihaleler_guvenli.csv",
     "depo_radari_temiz_v6.csv",
@@ -360,7 +361,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Tomruk, maden direği, kağıtlık odun ve diğer emvaller için filtreli ihale takip ekranı.</p>
-        <p class="small-note">Bu prototip Render yayını için hazırlanmıştır. vRender1: Render deploy paketi.</p>
+        <p class="small-note">Bu sürüm Türkiye geneli CSV dosyasını öncelikli okur. v30: arama kutusuna parti no yazınca da sonuç getirir.nı okur. v28: GitHub Actions günlük veri güncelleme altyapısı hazırlandı.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -1692,6 +1693,43 @@ def sayi(value):
     return f"{float(value):,.0f}".replace(",", ".")
 
 
+
+def genel_arama_uygula(df: pd.DataFrame, arama: str) -> pd.DataFrame:
+    """
+    Sidebar arama kutusu artık sadece ürün adında değil;
+    parti no, ihale no, ihale id, OİM ve OBM alanlarında da arar.
+    """
+    q = str(arama or "").strip()
+
+    if not q or df.empty:
+        return df
+
+    kolonlar = [
+        "urun_adi",
+        "parti_no",
+        "ihale_no",
+        "ihale_id",
+        "oim",
+        "obm",
+        "cografi_bolge",
+        "agac_turu",
+        "urun_turu",
+    ]
+
+    mask = pd.Series(False, index=df.index)
+
+    for kolon in kolonlar:
+        if kolon in df.columns:
+            mask = mask | df[kolon].astype(str).str.contains(q, case=False, na=False)
+
+    # Sayı girildiyse parti no ve ihale no için tam eşleşmeyi ayrıca garantiye al.
+    if q.isdigit():
+        for kolon in ["parti_no", "ihale_no", "ihale_id"]:
+            if kolon in df.columns:
+                mask = mask | (df[kolon].astype(str).str.strip() == q)
+
+    return df[mask]
+
 def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
     st.sidebar.header("Filtreler")
     st.sidebar.caption("Filtreler birbirine bağlı çalışır. Bölge seçince sadece o bölgedeki OBM/OİM seçenekleri gelir.")
@@ -1719,12 +1757,11 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         return temp_df
 
     # Önce arama uygulanır, sonra bütün filtre seçenekleri bu arama sonucuna göre daralır.
-    arama = st.sidebar.text_input("Ürün adı içinde ara", placeholder="Karaçam, maden, tomruk...", key="arama_v7")
+    arama = st.sidebar.text_input("Genel arama", placeholder="Parti no, ihale no, Karaçam, tomruk...", key="arama_v7")
 
     sonuc = df.copy()
 
-    if arama.strip() and "urun_adi" in sonuc.columns:
-        sonuc = sonuc[sonuc["urun_adi"].str.contains(arama.strip(), case=False, na=False)]
+    sonuc = genel_arama_uygula(sonuc, arama)
 
     # Kademeli filtreleme:
     # Bölge seçilince OBM seçenekleri sadece o bölgeden gelir.
