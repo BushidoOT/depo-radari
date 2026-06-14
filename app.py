@@ -16,11 +16,6 @@ st.set_page_config(
 CSV_DOSYA = "depo_radari_temiz_v6.csv"
 CSV_ONCELIKLI_DOSYALAR = [
     "depo_radari_turkiye_tum_ihaleler.csv",
-    "depo_radari_tum_ihaleler_guvenli_v3.csv",
-    "depo_radari_tum_ihaleler_guvenli_v2.csv",
-    "depo_radari_tum_ihaleler_guvenli.csv",
-    "depo_radari_temiz_v6.csv",
-    "depo_radari_temiz_v5.csv",
 ]
 
 OZET_DOSYASI = "depo_radari_ozet.json"
