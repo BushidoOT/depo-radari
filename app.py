@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v32",
+    page_title="Depo Radarı v35",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -16,6 +16,11 @@ st.set_page_config(
 CSV_DOSYA = "depo_radari_temiz_v6.csv"
 CSV_ONCELIKLI_DOSYALAR = [
     "depo_radari_turkiye_tum_ihaleler.csv",
+    "depo_radari_tum_ihaleler_guvenli_v3.csv",
+    "depo_radari_tum_ihaleler_guvenli_v2.csv",
+    "depo_radari_tum_ihaleler_guvenli.csv",
+    "depo_radari_temiz_v6.csv",
+    "depo_radari_temiz_v5.csv",
 ]
 
 OZET_DOSYASI = "depo_radari_ozet.json"
@@ -440,7 +445,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Türkiye geneli ihale, parti, fiyat ve fırsat takip ekranı.</p>
-        <p class="small-note">v32: CSV seçimi düzeltildi; Türkiye CSV öncelikli, dosya değişince cache yenilenir.</p>
+        <p class="small-note">v35: OİM/OBM/il/bölge bilgisi resmi OGM harita JSON dosyasından tamamlanır.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -603,54 +608,28 @@ def lisans_kodlarini_oku():
 
 
 def lisans_kontrolu():
+    """
+    V33:
+    Şimdilik premium kilidi açık.
+    Kod girme zorunluluğu kaldırıldı.
+    """
     st.sidebar.markdown("### 🔑 Lisans")
-
-    lisans_kodu = st.sidebar.text_input(
-        "Premium kod",
-        type="password",
-        placeholder="Premium kodunu gir",
-        key="lisans_kodu_v23",
-    )
-
-    kodlar = lisans_kodlarini_oku()
-
-    if lisans_kodu and lisans_kodu.strip() in kodlar:
-        st.sidebar.success("Premium aktif")
-        return "Premium"
-
-    st.sidebar.info("Ücretsiz paket")
-    return "Ücretsiz"
+    st.sidebar.success("Premium açık")
+    st.sidebar.caption("Kod girmeden CSV yükleme, analiz ve rapor indirme aktif.")
+    return "Premium"
 
 
 def premium_aktif(paket):
     """
-    Hem eski dict paket yapısını hem de yeni string paket yapısını destekler.
+    V33:
+    Premium özellikler geçici olarak herkese açık.
     """
-    if isinstance(paket, str):
-        return paket == "Premium"
-
-    if isinstance(paket, dict):
-        return bool(paket.get("premium", False)) or paket.get("ad") == "Premium"
-
-    return False
+    return True
 
 
 def paket_bilgi_goster(paket):
-    """
-    Sidebar paket bilgisini güvenli gösterir.
-    V23/V24 geçişinde bu fonksiyon bazı deploylarda eksik kalınca NameError oluşuyordu.
-    """
-    try:
-        aktif = premium_aktif(paket)
-    except Exception:
-        aktif = False
-
-    if aktif:
-        st.sidebar.success("Paket: Premium")
-        st.sidebar.caption("Premium özellikler aktif.")
-    else:
-        st.sidebar.info("Paket: Ücretsiz")
-        st.sidebar.caption("CSV yükleme, analiz ve rapor indirme premiumdur.")
+    st.sidebar.success("Paket: Premium açık")
+    st.sidebar.caption("V33: Kilitler geçici olarak kaldırıldı.")
 
 
 def kilitli_ozellik(baslik, aciklama):
@@ -724,6 +703,7 @@ def aktif_filtreleri_al():
     filtreler = {
         "arama": st.session_state.get("arama_v7", ""),
         "bolge": st.session_state.get("bolge_v7", "Tümü"),
+        "il": st.session_state.get("il_v34", "Tümü"),
         "obm": st.session_state.get("obm_v7", "Tümü"),
         "oim": st.session_state.get("oim_v7", "Tümü"),
         "urun": st.session_state.get("urun_v7", "Tümü"),
@@ -742,6 +722,7 @@ def filtre_ozet_metni(filtreler):
     etiketler = {
         "arama": "Arama",
         "bolge": "Bölge",
+        "il": "İl",
         "obm": "OBM",
         "oim": "OİM",
         "urun": "Ürün",
@@ -767,11 +748,11 @@ def filtreleri_uygula(df: pd.DataFrame, filtreler: dict) -> pd.DataFrame:
     sonuc = df.copy()
 
     arama = str(filtreler.get("arama", "")).strip()
-    if arama and "urun_adi" in sonuc.columns:
-        sonuc = sonuc[sonuc["urun_adi"].str.contains(arama, case=False, na=False)]
+    sonuc = genel_arama_uygula(sonuc, arama)
 
     kolon_haritasi = {
         "bolge": "cografi_bolge",
+        "il": "il",
         "obm": "obm",
         "oim": "oim",
         "urun": "urun_turu",
@@ -998,6 +979,7 @@ def yeni_kayitlar_panosu(df: pd.DataFrame):
             "muhammen_birim_fiyat",
             "firsat_puani",
             "fiyat_durumu",
+            "il",
             "obm",
             "oim",
             "kaynak_link",
@@ -1132,6 +1114,7 @@ def alarm_merkezi_panosu(df: pd.DataFrame):
             "muhammen_birim_fiyat",
             "firsat_puani",
             "fiyat_durumu",
+            "il",
             "obm",
             "oim",
             "kaynak_link",
@@ -1480,6 +1463,155 @@ def temiz_metin(value) -> str:
     return str(value).strip() if gecerli_metin(value) else ""
 
 
+
+# V34: CSV'de OBM / bölge boş geldiğinde OİM adından yer bilgisini tamamlamak için kullanılır.
+# Bu tablo filtreleme amaçlıdır; kaynakta OBM gelirse kaynak değeri korunur.
+OIM_HARITA_JSON_DOSYASI = "depo_radari_oim_konum_haritasi.json"
+
+OIM_KONUM_HARITASI = {
+    "AKHİSAR OİM": {"il": "Manisa", "obm": "İZMİR OBM", "bolge": "Ege"},
+    "GÖRDES OİM": {"il": "Manisa", "obm": "İZMİR OBM", "bolge": "Ege"},
+    "AYDIN OİM": {"il": "Aydın", "obm": "İZMİR OBM", "bolge": "Ege"},
+    "ÇAL OİM": {"il": "Denizli", "obm": "DENİZLİ OBM", "bolge": "Ege"},
+    "KÖYCEĞİZ OİM": {"il": "Muğla", "obm": "MUĞLA OBM", "bolge": "Ege"},
+    "MUĞLA OİM": {"il": "Muğla", "obm": "MUĞLA OBM", "bolge": "Ege"},
+    "SEYDİKEMER OİM": {"il": "Muğla", "obm": "MUĞLA OBM", "bolge": "Ege"},
+    "YILANLI OİM": {"il": "Muğla", "obm": "MUĞLA OBM", "bolge": "Ege"},
+    "TAVŞANLI OİM": {"il": "Kütahya", "obm": "KÜTAHYA OBM", "bolge": "Ege"},
+    "SİMAV OİM": {"il": "Kütahya", "obm": "KÜTAHYA OBM", "bolge": "Ege"},
+
+    "AKYAZI OİM": {"il": "Sakarya", "obm": "SAKARYA OBM", "bolge": "Marmara"},
+    "HENDEK OİM": {"il": "Sakarya", "obm": "SAKARYA OBM", "bolge": "Marmara"},
+    "GÖLCÜK OİM": {"il": "Kocaeli", "obm": "SAKARYA OBM", "bolge": "Marmara"},
+    "ANAFARTALAR OİM": {"il": "Çanakkale", "obm": "ÇANAKKALE OBM", "bolge": "Marmara"},
+    "AYVACIK OİM": {"il": "Çanakkale", "obm": "ÇANAKKALE OBM", "bolge": "Marmara"},
+    "BAYRAMİÇ OİM": {"il": "Çanakkale", "obm": "ÇANAKKALE OBM", "bolge": "Marmara"},
+    "KALKIM OİM": {"il": "Çanakkale", "obm": "ÇANAKKALE OBM", "bolge": "Marmara"},
+    "KELES OİM": {"il": "Bursa", "obm": "BURSA OBM", "bolge": "Marmara"},
+    "BOZÜYÜK OİM": {"il": "Bilecik", "obm": "ESKİŞEHİR OBM", "bolge": "Marmara"},
+
+    "TOSYA OİM": {"il": "Kastamonu", "obm": "KASTAMONU OBM", "bolge": "Karadeniz"},
+    "ARAÇ OİM": {"il": "Kastamonu", "obm": "KASTAMONU OBM", "bolge": "Karadeniz"},
+    "DEVREKANİ OİM": {"il": "Kastamonu", "obm": "KASTAMONU OBM", "bolge": "Karadeniz"},
+    "TAŞKÖPRÜ OİM": {"il": "Kastamonu", "obm": "KASTAMONU OBM", "bolge": "Karadeniz"},
+    "SAMATLAR OİM": {"il": "Kastamonu", "obm": "KASTAMONU OBM", "bolge": "Karadeniz"},
+    "DİRGİNE OİM": {"il": "Zonguldak", "obm": "ZONGULDAK OBM", "bolge": "Karadeniz"},
+    "BOYABAT OİM": {"il": "Sinop", "obm": "KASTAMONU OBM", "bolge": "Karadeniz"},
+    "ALAÇAM OİM": {"il": "Samsun", "obm": "SAMSUN OBM", "bolge": "Karadeniz"},
+    "KAVAK OİM": {"il": "Samsun", "obm": "SAMSUN OBM", "bolge": "Karadeniz"},
+    "ALMUS OİM": {"il": "Tokat", "obm": "AMASYA OBM", "bolge": "Karadeniz"},
+    "ERBAA OİM": {"il": "Tokat", "obm": "AMASYA OBM", "bolge": "Karadeniz"},
+    "OSMANCIK OİM": {"il": "Çorum", "obm": "AMASYA OBM", "bolge": "Karadeniz"},
+    "ARHAVİ OİM": {"il": "Artvin", "obm": "ARTVİN OBM", "bolge": "Karadeniz"},
+    "ARTVİN OİM": {"il": "Artvin", "obm": "ARTVİN OBM", "bolge": "Karadeniz"},
+
+    "BEYPAZARI OİM": {"il": "Ankara", "obm": "ANKARA OBM", "bolge": "İç Anadolu"},
+    "ÇANKIRI OİM": {"il": "Çankırı", "obm": "ANKARA OBM", "bolge": "İç Anadolu"},
+    "BEYŞEHİR OİM": {"il": "Konya", "obm": "KONYA OBM", "bolge": "İç Anadolu"},
+    "EREĞLİ OİM": {"il": "Konya", "obm": "KONYA OBM", "bolge": "İç Anadolu"},
+    "ERMENEK OİM": {"il": "Karaman", "obm": "KONYA OBM", "bolge": "İç Anadolu"},
+    "NİĞDE OİM": {"il": "Niğde", "obm": "KAYSERİ OBM", "bolge": "İç Anadolu"},
+
+    "ELAZIĞ OİM": {"il": "Elazığ", "obm": "ELAZIĞ OBM", "bolge": "Doğu Anadolu"},
+
+    "GAZİANTEP OİM": {"il": "Gaziantep", "obm": "KAHRAMANMARAŞ OBM", "bolge": "Güneydoğu Anadolu"},
+
+    "GÖKSUN OİM": {"il": "Kahramanmaraş", "obm": "KAHRAMANMARAŞ OBM", "bolge": "Akdeniz"},
+    "KOZAN OİM": {"il": "Adana", "obm": "ADANA OBM", "bolge": "Akdeniz"},
+    "POS OİM": {"il": "Adana", "obm": "ADANA OBM", "bolge": "Akdeniz"},
+    "TARSUS OİM": {"il": "Mersin", "obm": "MERSİN OBM", "bolge": "Akdeniz"},
+    "ANTAKYA OİM": {"il": "Hatay", "obm": "KAHRAMANMARAŞ OBM", "bolge": "Akdeniz"},
+    "DÖRTYOL OİM": {"il": "Hatay", "obm": "KAHRAMANMARAŞ OBM", "bolge": "Akdeniz"},
+    "TAŞAĞIL OİM": {"il": "Antalya", "obm": "ANTALYA OBM", "bolge": "Akdeniz"},
+    "KAŞ OİM": {"il": "Antalya", "obm": "ANTALYA OBM", "bolge": "Akdeniz"},
+    "BUCAK OİM": {"il": "Burdur", "obm": "ISPARTA OBM", "bolge": "Akdeniz"},
+    "BURDUR OİM": {"il": "Burdur", "obm": "ISPARTA OBM", "bolge": "Akdeniz"},
+    "GÖLHİSAR OİM": {"il": "Burdur", "obm": "ISPARTA OBM", "bolge": "Akdeniz"},
+    "ISPARTA OİM": {"il": "Isparta", "obm": "ISPARTA OBM", "bolge": "Akdeniz"},
+}
+
+
+
+@st.cache_data(show_spinner=False)
+def oim_konum_haritasi_oku(cache_key=None):
+    """
+    Önce resmi OGM tarama scriptinin ürettiği JSON dosyasını okur.
+    JSON yoksa app içindeki yedek haritayı kullanır.
+    """
+    harita = dict(OIM_KONUM_HARITASI)
+
+    if os.path.exists(OIM_HARITA_JSON_DOSYASI):
+        try:
+            with open(OIM_HARITA_JSON_DOSYASI, "r", encoding="utf-8") as f:
+                veri = json.load(f)
+
+            json_harita = veri.get("harita", {})
+
+            for oim, bilgi in json_harita.items():
+                key = str(oim or "").strip().upper().replace(" OIM", " OİM")
+
+                if not key:
+                    continue
+
+                harita[key] = {
+                    "il": bilgi.get("il", "Bilinmeyen"),
+                    "obm": bilgi.get("obm", "Bilinmeyen OBM"),
+                    "bolge": bilgi.get("bolge", bilgi.get("cografi_bolge", "Bilinmeyen")),
+                }
+
+        except Exception:
+            pass
+
+    return harita
+
+
+def oim_harita_cache_key():
+    try:
+        return os.path.getmtime(OIM_HARITA_JSON_DOSYASI), os.path.getsize(OIM_HARITA_JSON_DOSYASI)
+    except Exception:
+        return 0, 0
+
+def konum_bilgisi_tamamla(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    harita = oim_konum_haritasi_oku(oim_harita_cache_key())
+
+    if "il" not in df.columns:
+        df["il"] = ""
+
+    for kolon in ["il", "obm", "oim", "cografi_bolge"]:
+        if kolon not in df.columns:
+            df[kolon] = ""
+
+        df[kolon] = df[kolon].fillna("").astype(str).str.strip()
+
+    def bos_mu(v):
+        v = str(v or "").strip()
+        return v == "" or v.lower() in ["nan", "none", "null", "-"] or "BİLİNMEYEN" in v.upper() or "BILINMEYEN" in v.upper()
+
+    for idx, row in df.iterrows():
+        oim = str(row.get("oim", "") or "").strip().upper()
+        bilgi = harita.get(oim)
+
+        if not bilgi:
+            if bos_mu(row.get("il")):
+                df.at[idx, "il"] = "Bilinmeyen"
+            if bos_mu(row.get("obm")):
+                df.at[idx, "obm"] = "Bilinmeyen OBM"
+            if bos_mu(row.get("cografi_bolge")):
+                df.at[idx, "cografi_bolge"] = "Bilinmeyen"
+            continue
+
+        if bos_mu(row.get("il")):
+            df.at[idx, "il"] = bilgi["il"]
+
+        if bos_mu(row.get("obm")):
+            df.at[idx, "obm"] = bilgi["obm"]
+
+        if bos_mu(row.get("cografi_bolge")):
+            df.at[idx, "cografi_bolge"] = bilgi["bolge"]
+
+    return df
+
 def hazirla(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
@@ -1511,12 +1643,14 @@ def hazirla(df: pd.DataFrame) -> pd.DataFrame:
 
     metin_kolonlari = [
         "sinif", "boy_kodu", "cap_kodu", "urun_turu", "agac_turu",
-        "parti_durum", "detay_durum", "obm", "oim", "cografi_bolge"
+        "parti_durum", "detay_durum", "il", "obm", "oim", "cografi_bolge"
     ]
 
     for kolon in metin_kolonlari:
         if kolon in df.columns:
             df[kolon] = df[kolon].astype(str).str.strip().replace(bos_degerler)
+
+    df = konum_bilgisi_tamamla(df)
 
     df = puan_kategorisi_olustur(df)
     df = supheli_fiyat_isaretle(df)
@@ -1814,6 +1948,7 @@ def genel_arama_uygula(df: pd.DataFrame, arama: str) -> pd.DataFrame:
         "ihale_id",
         "oim",
         "obm",
+        "il",
         "cografi_bolge",
         "agac_turu",
         "urun_turu",
@@ -1873,7 +2008,7 @@ def sol_menu_oku() -> str:
 
 def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
     st.sidebar.header("Filtreler")
-    st.sidebar.caption("Filtreler birbirine bağlı çalışır. Bölge seçince sadece o bölgedeki OBM/OİM seçenekleri gelir.")
+    st.sidebar.caption("Filtreler birbirine bağlı çalışır. Bölge → İl → OBM → OİM şeklinde daralır.")
 
     uploaded = None
 
@@ -1887,7 +2022,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
             st.sidebar.success(f"Okunan CSV: {st.session_state.get('okunan_csv', '-')}")
     else:
         st.sidebar.success(f"Okunan CSV: {st.session_state.get('okunan_csv', '-')}")
-        st.sidebar.warning("CSV yükleme premium lisansa ayrıldı.")
+        st.sidebar.warning("CSV yükleme aktif.")
 
     def secenek_kademeli(temp_df: pd.DataFrame, kolon: str):
         return secenek(temp_df, kolon)
@@ -1913,6 +2048,13 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         key="bolge_v7"
     )
     sonuc = uygula_esitlik(sonuc, "cografi_bolge", bolge)
+
+    il = st.sidebar.selectbox(
+        "İl",
+        secenek_kademeli(sonuc, "il"),
+        key="il_v34"
+    )
+    sonuc = uygula_esitlik(sonuc, "il", il)
 
     obm = st.sidebar.selectbox(
         "OBM",
@@ -2254,6 +2396,7 @@ def kart(k):
     miktar = m3(k.get("miktar_m3_hesap"))
     toplam = tl(k.get("toplam_muhammen_hesap"))
     teminat = tl(k.get("teminat_tutari"))
+    il = temiz_metin(k.get("il"))
     obm = temiz_metin(k.get("obm"))
     oim = temiz_metin(k.get("oim"))
     durum = temiz_metin(k.get("parti_durum"))
@@ -2300,7 +2443,7 @@ def kart(k):
                 <b>Miktar:</b> {miktar} &nbsp; | &nbsp;
                 <b>Toplam:</b> {toplam} &nbsp; | &nbsp;
                 <b>Teminat:</b> {teminat}<br>
-                <b>Yer:</b> {obm} / {oim}<br>
+                <b>Yer:</b> {il} / {obm} / {oim}<br>
                 <b>Durum:</b> {durum}<br>
                 {link_html}
             </div>
@@ -2365,6 +2508,7 @@ def tablo(df: pd.DataFrame):
         "parti_no",
         "ihale_no",
         "cografi_bolge",
+        "il",
         "obm",
         "oim",
         "urun_adi",
@@ -2387,7 +2531,7 @@ def tablo(df: pd.DataFrame):
     gorunen = df[kolonlar].copy()
 
     metin_kolonlari = [
-        "firsat_seviyesi", "fiyat_durumu", "puan_kategorisi", "karsilastirma_kategorisi", "kalite_ozeti", "cografi_bolge", "obm", "oim", "urun_adi", "urun_turu",
+        "firsat_seviyesi", "fiyat_durumu", "puan_kategorisi", "karsilastirma_kategorisi", "kalite_ozeti", "cografi_bolge", "il", "obm", "oim", "urun_adi", "urun_turu",
         "agac_turu", "sinif", "boy_kodu", "cap_kodu", "supheli_neden"
     ]
     for kolon in metin_kolonlari:
@@ -2409,6 +2553,7 @@ def tablo(df: pd.DataFrame):
             "parti_no": "Parti",
             "ihale_no": "İhale No",
             "cografi_bolge": "Bölge",
+            "il": "İl",
             "obm": "OBM",
             "oim": "OİM",
             "urun_adi": "Ürün",
@@ -2497,10 +2642,16 @@ df = hazirla(df_raw)
 takip_hedefini_uygula()
 sonuc = filtrele(df, paket)
 
-st.caption(f"Okunan dosya: **{okunacak_csv}** — Arama kutusunda parti no, ihale no, ürün, OİM ve OBM yazabilirsin.")
+st.caption(f"Okunan dosya: **{okunacak_csv}** — Arama kutusunda parti no, ihale no, ürün, il, OİM ve OBM yazabilirsin.")
 
 mevcut_csvler = sunucudaki_csvleri_listele()
 st.sidebar.caption("Sunucudaki CSV: " + (", ".join(mevcut_csvler[:5]) if mevcut_csvler else "CSV yok"))
+
+try:
+    _harita_sayisi = len(oim_konum_haritasi_oku(oim_harita_cache_key()))
+    st.sidebar.caption(f"OİM konum haritası: {_harita_sayisi} kayıt")
+except Exception:
+    pass
 
 if okunacak_csv != "depo_radari_turkiye_tum_ihaleler.csv":
     st.warning(
@@ -2550,7 +2701,7 @@ elif menu_secimi == "🔎 Sonuçlar":
         else:
             kilitli_ozellik(
                 "Analiz görünümü",
-                "Analiz görünümü premium lisansa ayrıldı. Kartlar, Tablo, Öne çıkanlar ve Ürün bazlı fırsat panosu ücretsiz açık kalır."
+                "Analiz görünümü aktif."
             )
 
     st.divider()
@@ -2565,7 +2716,7 @@ elif menu_secimi == "🔎 Sonuçlar":
     else:
         kilitli_ozellik(
             "Rapor indirme",
-            "CSV/Excel raporu indirme premium lisansa ayrıldı. Ücretsiz kullanımda sonuçlar ekranda görüntülenir."
+            "Rapor indirme aktif."
         )
 
 elif menu_secimi == "⭐ Fırsat Panosu":
