@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v35",
+    page_title="Depo Radarı v36",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -421,7 +421,45 @@ st.markdown(
         border-right: 1px solid rgba(150,150,150,.16);
     }
     div[data-testid="stSidebar"] .stRadio > div {
-        gap: 6px;
+        gap: 8px;
+    }
+    div[data-testid="stSidebar"] .stRadio label {
+        border: 1px solid rgba(255,255,255,.12);
+        background: linear-gradient(135deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+        border-radius: 16px;
+        padding: 10px 12px;
+        transition: all .18s ease;
+        box-shadow: 0 6px 16px rgba(0,0,0,.08);
+    }
+    div[data-testid="stSidebar"] .stRadio label:hover {
+        border-color: rgba(52,152,219,.40);
+        transform: translateY(-1px);
+    }
+    div[data-testid="stSidebar"] .stRadio label:has(input:checked) {
+        border-color: rgba(52,152,219,.65);
+        background: linear-gradient(135deg, rgba(52,152,219,.18), rgba(46,204,113,.10));
+        box-shadow: 0 10px 24px rgba(0,0,0,.14);
+    }
+    div[data-testid="stSidebar"] .stRadio label p {
+        font-weight: 800 !important;
+        font-size: 14px !important;
+    }
+    .menu-title-box {
+        border: 1px solid rgba(255,255,255,.10);
+        border-radius: 18px;
+        padding: 12px 14px;
+        background: linear-gradient(135deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+        margin-bottom: 10px;
+    }
+    .menu-title-box .head {
+        font-size: 18px;
+        font-weight: 900;
+        margin-bottom: 4px;
+    }
+    .menu-title-box .sub {
+        font-size: 12.5px;
+        opacity: .78;
+        line-height: 1.4;
     }
     .stButton > button {
         border-radius: 999px;
@@ -445,7 +483,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Türkiye geneli ihale, parti, fiyat ve fırsat takip ekranı.</p>
-        <p class="small-note">v35: OİM/OBM/il/bölge bilgisi resmi OGM harita JSON dosyasından tamamlanır.</p>
+        <p class="small-note">v36: modern menü + filtre sonrası otomatik sonuç ekranı + resmi OGM haritası.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -1981,9 +2019,18 @@ def bolum_basligi(baslik: str, aciklama: str = ""):
 
 
 def sol_menu_oku() -> str:
-    st.sidebar.markdown("### 🧭 Menü")
+    st.sidebar.markdown(
+        """
+        <div class="menu-title-box">
+            <div class="head">🧭 Hızlı Menü</div>
+            <div class="sub">İstediğin ekrana tek dokunuşla geç. Filtre uygulandığında sistem seni otomatik olarak Sonuçlar ekranına götürür.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     secim = st.sidebar.radio(
-        "Gitmek istediğin bölüm",
+        "Bölüm",
         [
             "🏠 Özet",
             "🔎 Sonuçlar",
@@ -1992,16 +2039,8 @@ def sol_menu_oku() -> str:
             "🚨 Alarm Merkezi",
             "🆕 Yeni Kayıtlar",
         ],
-        key="sol_menu_v31",
-    )
-
-    st.sidebar.markdown(
-        """
-        <div class="menu-help">
-            Sol menüden bölümler ayrıldı. Filtreler yine aşağıda çalışır; seçtiğin bölüm sadece o ekranı gösterir.
-        </div>
-        """,
-        unsafe_allow_html=True,
+        key="sol_menu_v36",
+        label_visibility="collapsed",
     )
 
     return secim
@@ -2035,6 +2074,10 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
     # Önce arama uygulanır, sonra bütün filtre seçenekleri bu arama sonucuna göre daralır.
     arama = st.sidebar.text_input("Genel arama", placeholder="Parti no, ihale no, Karaçam, tomruk...", key="arama_v7")
 
+    filtre_aktif = False
+    if str(arama or "").strip():
+        filtre_aktif = True
+
     sonuc = df.copy()
 
     sonuc = genel_arama_uygula(sonuc, arama)
@@ -2048,6 +2091,8 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         key="bolge_v7"
     )
     sonuc = uygula_esitlik(sonuc, "cografi_bolge", bolge)
+    if bolge != "Tümü":
+        filtre_aktif = True
 
     il = st.sidebar.selectbox(
         "İl",
@@ -2055,6 +2100,8 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         key="il_v34"
     )
     sonuc = uygula_esitlik(sonuc, "il", il)
+    if il != "Tümü":
+        filtre_aktif = True
 
     obm = st.sidebar.selectbox(
         "OBM",
@@ -2062,6 +2109,8 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         key="obm_v7"
     )
     sonuc = uygula_esitlik(sonuc, "obm", obm)
+    if obm != "Tümü":
+        filtre_aktif = True
 
     oim = st.sidebar.selectbox(
         "OİM",
@@ -2069,6 +2118,8 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         key="oim_v7"
     )
     sonuc = uygula_esitlik(sonuc, "oim", oim)
+    if oim != "Tümü":
+        filtre_aktif = True
 
     urun = st.sidebar.selectbox(
         "Ürün Türü",
@@ -2076,6 +2127,8 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         key="urun_v7"
     )
     sonuc = uygula_esitlik(sonuc, "urun_turu", urun)
+    if urun != "Tümü":
+        filtre_aktif = True
 
     agac = st.sidebar.selectbox(
         "Ağaç Türü",
@@ -2083,6 +2136,8 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         key="agac_v7"
     )
     sonuc = uygula_esitlik(sonuc, "agac_turu", agac)
+    if agac != "Tümü":
+        filtre_aktif = True
 
     sinif = st.sidebar.selectbox(
         "Sınıf",
@@ -2090,6 +2145,8 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         key="sinif_v7"
     )
     sonuc = uygula_esitlik(sonuc, "sinif", sinif)
+    if sinif != "Tümü":
+        filtre_aktif = True
 
     boy = st.sidebar.selectbox(
         "Boy Kodu",
@@ -2097,6 +2154,8 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         key="boy_v7"
     )
     sonuc = uygula_esitlik(sonuc, "boy_kodu", boy)
+    if boy != "Tümü":
+        filtre_aktif = True
 
     cap = st.sidebar.selectbox(
         "Çap Kodu",
@@ -2104,6 +2163,8 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         key="cap_v7"
     )
     sonuc = uygula_esitlik(sonuc, "cap_kodu", cap)
+    if cap != "Tümü":
+        filtre_aktif = True
 
     # Fiyat ve miktar sliderları artık seçilmiş filtrelerden kalan sonuca göre oluşur.
     if not sonuc.empty and "muhammen_birim_fiyat" in sonuc.columns and sonuc["muhammen_birim_fiyat"].notna().any():
@@ -2121,6 +2182,8 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
                 step=100,
                 key="fiyat_v7"
             )
+            if fiyat != (min_f, max_f):
+                filtre_aktif = True
             sonuc = sonuc[
                 (sonuc["muhammen_birim_fiyat"] >= fiyat[0]) &
                 (sonuc["muhammen_birim_fiyat"] <= fiyat[1])
@@ -2141,6 +2204,8 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
                 step=1.0,
                 key="miktar_v7"
             )
+            if miktar != (min_m, max_m):
+                filtre_aktif = True
             sonuc = sonuc[
                 (sonuc["miktar_m3_hesap"] >= miktar[0]) &
                 (sonuc["miktar_m3_hesap"] <= miktar[1])
@@ -2161,6 +2226,8 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
                 step=1,
                 key="puan_v7"
             )
+            if puan_araligi != (min_puan, max_puan):
+                filtre_aktif = True
             sonuc = sonuc[
                 (sonuc["firsat_puani"] >= puan_araligi[0]) &
                 (sonuc["firsat_puani"] <= puan_araligi[1])
@@ -2168,6 +2235,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
 
     sadece_supheli = st.sidebar.checkbox("Sadece şüpheli fiyatları göster", key="supheli_v7")
     if sadece_supheli:
+        filtre_aktif = True
         sonuc = sonuc[sonuc["supheli_fiyat"] == True]
 
     siralama = st.sidebar.selectbox(
@@ -2182,6 +2250,9 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         ],
         key="siralama_v7"
     )
+
+    if filtre_aktif:
+        st.session_state["sol_menu_v36"] = "🔎 Sonuçlar"
 
     if sonuc.empty:
         return sonuc
@@ -2198,6 +2269,9 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         sonuc = sonuc.sort_values("miktar_m3_hesap", ascending=True)
     elif siralama == "Parti no artan" and "parti_no" in sonuc.columns:
         sonuc = sonuc.sort_values("parti_no", ascending=True)
+
+    if filtre_aktif:
+        st.session_state["sol_menu_v36"] = "🔎 Sonuçlar"
 
     return sonuc
 
