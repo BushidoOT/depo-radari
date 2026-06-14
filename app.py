@@ -3,6 +3,7 @@ import glob
 import json
 import hashlib
 import uuid
+import html
 import pandas as pd
 import streamlit as st
 
@@ -909,14 +910,755 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
+st.markdown(
+    """
+    <style>
+    /* FORCE_LIGHT_ADMIN_FIX */
+    :root{
+        color-scheme: light !important;
+        --bg:#f4f7fb;
+        --card:#ffffff;
+        --line:#d8e2ef;
+        --text:#0f172a;
+        --muted:#64748b;
+        --blue:#2563eb;
+        --green:#16a34a;
+        --shadow:0 16px 38px rgba(15,23,42,.08);
+    }
+
+    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stAppViewContainer"] > .main{
+        background:var(--bg) !important;
+        color:var(--text) !important;
+    }
+
+    *{
+        scrollbar-color:#cbd5e1 #eef3f9;
+    }
+
+    header[data-testid="stHeader"]{
+        background:var(--bg) !important;
+    }
+
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"] > div,
+    div[data-testid="stSidebar"],
+    div[data-testid="stSidebarContent"],
+    div[data-testid="stSidebarUserContent"]{
+        background:#eef3f9 !important;
+        color:var(--text) !important;
+    }
+
+    section[data-testid="stSidebar"] *{
+        color:var(--text) !important;
+    }
+
+    .hero,
+    .section-head,
+    .result-card,
+    .product-board,
+    .topbox,
+    .metric-shell,
+    div[data-testid="stExpander"],
+    div[data-testid="stExpander"] details,
+    div[data-testid="stExpander"] summary,
+    div[data-testid="stExpander"] div[role="button"]{
+        background:var(--card) !important;
+        color:var(--text) !important;
+        border-color:var(--line) !important;
+    }
+
+    div[data-testid="stExpander"]{
+        border:2px solid var(--line) !important;
+        border-radius:24px !important;
+        box-shadow:var(--shadow) !important;
+        overflow:hidden !important;
+    }
+
+    div[data-testid="stExpander"] *{
+        color:var(--text) !important;
+    }
+
+    div[data-testid="stExpander"] pre,
+    div[data-testid="stExpander"] code,
+    pre, code{
+        background:#f8fafc !important;
+        color:#0f172a !important;
+        border:1px solid #d8e2ef !important;
+        border-radius:14px !important;
+    }
+
+    div[data-testid="stTextInput"] input,
+    div[data-testid="stNumberInput"] input,
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    textarea,
+    input{
+        background:#ffffff !important;
+        color:#0f172a !important;
+        border-color:#d8e2ef !important;
+    }
+
+    div[data-testid="stTextInput"] input::placeholder,
+    input::placeholder,
+    textarea::placeholder{
+        color:#94a3b8 !important;
+        opacity:1 !important;
+    }
+
+    .stButton > button,
+    .stDownloadButton > button,
+    button{
+        border-radius:22px !important;
+        font-weight:950 !important;
+    }
+
+    .stButton > button[kind="primary"],
+    button[kind="primary"]{
+        background:var(--blue) !important;
+        color:#ffffff !important;
+        border-color:var(--blue) !important;
+    }
+
+    .stButton > button[kind="secondary"],
+    button[kind="secondary"]{
+        background:#ffffff !important;
+        color:#0f172a !important;
+        border:2px solid #d8e2ef !important;
+    }
+
+    .user-table-wrap{
+        background:#ffffff;
+        border:2px solid #d8e2ef;
+        border-radius:24px;
+        box-shadow:var(--shadow);
+        overflow:auto;
+        margin:14px 0 24px 0;
+    }
+
+    .user-table{
+        width:100%;
+        border-collapse:collapse;
+        min-width:920px;
+        color:#0f172a;
+    }
+
+    .user-table th{
+        background:#f8fafc;
+        color:#475569;
+        text-align:left;
+        padding:14px 12px;
+        font-weight:950;
+        border-bottom:2px solid #d8e2ef;
+        white-space:nowrap;
+    }
+
+    .user-table td{
+        background:#ffffff;
+        color:#0f172a;
+        padding:14px 12px;
+        font-weight:800;
+        border-bottom:1px solid #e2e8f0;
+        white-space:nowrap;
+    }
+
+    .user-table tr:last-child td{
+        border-bottom:none;
+    }
+
+    .user-card{
+        background:#ffffff;
+        border:2px solid #d8e2ef;
+        border-radius:24px;
+        padding:18px 20px;
+        box-shadow:var(--shadow);
+        margin:18px 0 10px 0;
+        color:#0f172a;
+    }
+
+    .user-card-head{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:14px;
+    }
+
+    .user-card-title{
+        font-size:22px;
+        font-weight:950;
+        color:#0f172a;
+    }
+
+    .user-card-sub{
+        color:#64748b;
+        font-size:14px;
+        font-weight:750;
+        margin-top:4px;
+    }
+
+    .user-pill{
+        border:2px solid #bbf7d0;
+        background:#ecfdf5;
+        color:#047857;
+        border-radius:999px;
+        padding:8px 13px;
+        font-weight:950;
+        white-space:nowrap;
+    }
+
+    .side-title-card{
+        background:#ffffff !important;
+        border:2px solid #d8e2ef !important;
+        border-radius:24px !important;
+        padding:16px 16px !important;
+        margin:10px 0 14px 0 !important;
+        box-shadow:0 12px 28px rgba(15,23,42,.06) !important;
+    }
+
+    .side-title-card.admin-card{
+        background:#ecfdf5 !important;
+        border-color:#86efac !important;
+    }
+
+    .side-title{
+        font-size:20px !important;
+        font-weight:950 !important;
+        letter-spacing:-.3px !important;
+        color:#0f172a !important;
+    }
+
+    .side-sub{
+        font-size:13px !important;
+        font-weight:750 !important;
+        line-height:1.35 !important;
+        color:#64748b !important;
+        margin-top:4px !important;
+    }
+
+    div[data-testid="stMetric"]{
+        background:#ffffff !important;
+        color:#0f172a !important;
+        border:2px solid #d8e2ef !important;
+        border-radius:24px !important;
+        box-shadow:var(--shadow) !important;
+    }
+
+    div[data-testid="stMetric"] *{
+        color:#0f172a !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 st.markdown(
     """
     <div class="hero">
-        <div class="mesaha-user-pill">Depo • Radarı</div>
-        <div class="hero-title">🌲 Depo Radarı</div>
-        <p class="hero-sub">Türkiye geneli ihale, parti, fiyat ve fırsat takip ekranı.</p>
-        <p class="small-note">Mesaha İO tarzı sade, hızlı ve mobil uyumlu arayüz.</p>
+        <div class="hero-head">
+            <div>
+                <div class="hero-title">Depo Radarı</div>
+                <p class="hero-sub">Türkiye geneli ihale, parti, fiyat ve fırsat takibini modern bir panel yapısında gösteren kontrol ekranı.</p>
+                <p class="small-note">Yeni tasarım: daha temiz kart yapısı, daha belirgin filtreler ve yeşil vurgu rengi.</p>
+            </div>
+            <div class="hero-chip">● Yeşil Panel</div>
+        </div>
     </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+st.markdown(
+    """
+    <style>
+    /* DASHBOARD_GREEN_REDESIGN */
+    :root{
+        color-scheme: light !important;
+        --app-bg:#eef1f3;
+        --panel-bg:#f6f7f5;
+        --card:#ffffff;
+        --card-soft:#fbfcfb;
+        --line:#dbe3dd;
+        --text:#132238;
+        --muted:#6f7f76;
+        --green:#1f8d5d;
+        --green-dark:#166544;
+        --green-soft:#e8f7ef;
+        --shadow:0 20px 50px rgba(17,24,39,.07);
+        --shadow-soft:0 10px 24px rgba(17,24,39,.05);
+        --radius-xl:30px;
+        --radius-lg:24px;
+        --radius-md:18px;
+    }
+
+    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stAppViewContainer"] > .main{
+        background:var(--app-bg) !important;
+        color:var(--text) !important;
+    }
+
+    .stApp{
+        position:relative;
+        overflow-x:hidden;
+    }
+
+    .stApp::before{
+        content:"";
+        position:fixed;
+        inset:auto auto -140px -140px;
+        width:420px;
+        height:420px;
+        border-radius:999px;
+        background:radial-gradient(circle, rgba(31,141,93,.18), rgba(31,141,93,0));
+        pointer-events:none;
+        z-index:0;
+        filter:blur(2px);
+    }
+
+    .stApp::after{
+        content:"";
+        position:fixed;
+        inset:40px -100px auto auto;
+        width:340px;
+        height:340px;
+        border-radius:999px;
+        background:radial-gradient(circle, rgba(198,214,203,.40), rgba(198,214,203,0));
+        pointer-events:none;
+        z-index:0;
+        filter:blur(6px);
+    }
+
+    header[data-testid="stHeader"]{
+        background:transparent !important;
+    }
+
+    [data-testid="stToolbar"]{
+        right:1rem !important;
+        top:0.5rem !important;
+    }
+
+    .block-container{
+        max-width:1450px !important;
+        padding-top:1.35rem !important;
+        padding-bottom:2.5rem !important;
+        position:relative;
+        z-index:1;
+    }
+
+    section[data-testid="stSidebar"]{
+        background:linear-gradient(180deg, #f6f7f5 0%, #f1f4f2 100%) !important;
+        border-right:1px solid rgba(205,214,210,.9) !important;
+    }
+
+    section[data-testid="stSidebar"] > div,
+    div[data-testid="stSidebarUserContent"],
+    div[data-testid="stSidebarContent"]{
+        background:transparent !important;
+        color:var(--text) !important;
+    }
+
+    section[data-testid="stSidebar"] *{
+        color:var(--text) !important;
+    }
+
+    h1, h2, h3, h4, h5, h6, p, label, span, div{
+        color:inherit;
+    }
+
+    .hero{
+        background:rgba(255,255,255,.88) !important;
+        border:1px solid rgba(215,224,219,.95) !important;
+        border-radius:34px !important;
+        padding:28px 30px !important;
+        box-shadow:var(--shadow) !important;
+        margin-bottom:22px !important;
+        position:relative;
+        overflow:hidden;
+        backdrop-filter: blur(12px);
+    }
+
+    .hero::before{
+        content:"";
+        position:absolute;
+        right:-50px;
+        top:-50px;
+        width:220px;
+        height:220px;
+        border-radius:999px;
+        background:radial-gradient(circle, rgba(31,141,93,.18), rgba(31,141,93,0));
+        pointer-events:none;
+    }
+
+    .hero::after{
+        content:"";
+        position:absolute;
+        left:-90px;
+        bottom:-110px;
+        width:240px;
+        height:240px;
+        border-radius:999px;
+        border:1px solid rgba(31,141,93,.08);
+        pointer-events:none;
+        opacity:.9;
+    }
+
+    .hero-head{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:18px;
+        flex-wrap:wrap;
+    }
+
+    .hero-title{
+        font-size:52px !important;
+        line-height:1.05 !important;
+        font-weight:950 !important;
+        letter-spacing:-1.35px !important;
+        color:#132238 !important;
+        margin:0 0 8px 0 !important;
+    }
+
+    .hero-sub{
+        font-size:18px !important;
+        line-height:1.55 !important;
+        font-weight:650 !important;
+        color:#617166 !important;
+        margin:0 !important;
+        max-width:760px;
+    }
+
+    .hero-chip{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:12px 18px;
+        border-radius:999px;
+        border:1.5px solid rgba(31,141,93,.22);
+        background:var(--green-soft);
+        color:var(--green-dark);
+        font-size:16px;
+        font-weight:900;
+        white-space:nowrap;
+        box-shadow:0 10px 20px rgba(31,141,93,.08);
+    }
+
+    .small-note{
+        color:#839188 !important;
+        font-size:14px !important;
+        line-height:1.5 !important;
+        margin-top:10px !important;
+        font-weight:650 !important;
+    }
+
+    .section-head{
+        background:rgba(255,255,255,.92) !important;
+        border:1px solid rgba(215,224,219,.95) !important;
+        border-radius:28px !important;
+        padding:22px 24px !important;
+        box-shadow:var(--shadow-soft) !important;
+        margin:0 0 18px 0 !important;
+    }
+
+    .section-head-title{
+        font-size:34px !important;
+        line-height:1.08 !important;
+        font-weight:950 !important;
+        letter-spacing:-.8px !important;
+        color:#132238 !important;
+        margin-bottom:6px !important;
+    }
+
+    .section-head-sub{
+        color:#708077 !important;
+        font-size:15px !important;
+        line-height:1.55 !important;
+        font-weight:650 !important;
+    }
+
+    .side-title-card{
+        background:rgba(255,255,255,.92) !important;
+        border:1px solid rgba(215,224,219,.95) !important;
+        border-radius:24px !important;
+        padding:18px 18px !important;
+        margin:8px 0 14px 0 !important;
+        box-shadow:var(--shadow-soft) !important;
+    }
+
+    .side-title-card.admin-card{
+        background:linear-gradient(180deg, #eff9f2 0%, #e8f6ee 100%) !important;
+        border-color:rgba(31,141,93,.22) !important;
+    }
+
+    .side-title{
+        font-size:22px !important;
+        font-weight:950 !important;
+        letter-spacing:-.45px !important;
+        color:#132238 !important;
+        margin-bottom:4px !important;
+    }
+
+    .side-sub{
+        font-size:13px !important;
+        font-weight:700 !important;
+        line-height:1.45 !important;
+        color:#73857b !important;
+        margin-top:2px !important;
+    }
+
+    .stButton > button,
+    .stDownloadButton > button{
+        width:100% !important;
+        border-radius:18px !important;
+        min-height:52px !important;
+        border:1.5px solid rgba(195,205,202,.95) !important;
+        background:#ffffff !important;
+        color:#132238 !important;
+        font-weight:900 !important;
+        font-size:16px !important;
+        box-shadow:0 6px 18px rgba(17,24,39,.04) !important;
+        transition:all .18s ease !important;
+    }
+
+    .stButton > button:hover,
+    .stDownloadButton > button:hover{
+        border-color:rgba(31,141,93,.35) !important;
+        transform:translateY(-1px);
+        box-shadow:0 12px 24px rgba(17,24,39,.08) !important;
+        color:#132238 !important;
+    }
+
+    .stButton > button[kind="primary"]{
+        background:linear-gradient(180deg, #22a267 0%, #1b8d5b 100%) !important;
+        border-color:#1b8d5b !important;
+        color:#ffffff !important;
+        box-shadow:0 12px 26px rgba(31,141,93,.22) !important;
+    }
+
+    .stButton > button[kind="primary"]:hover{
+        background:linear-gradient(180deg, #1f9a62 0%, #17774d 100%) !important;
+        color:#ffffff !important;
+    }
+
+    .stDownloadButton > button{
+        background:linear-gradient(180deg, #ffffff 0%, #f8fbf9 100%) !important;
+    }
+
+    div[data-testid="stMetric"]{
+        background:rgba(255,255,255,.94) !important;
+        border:1px solid rgba(215,224,219,.95) !important;
+        border-radius:24px !important;
+        box-shadow:var(--shadow-soft) !important;
+        padding:8px 6px !important;
+    }
+
+    div[data-testid="stMetric"] *{
+        color:#132238 !important;
+    }
+
+    div[data-testid="stMetricValue"]{
+        font-weight:950 !important;
+        letter-spacing:-.6px !important;
+    }
+
+    .result-card,
+    .product-board,
+    .topbox,
+    .watch-card,
+    .new-record-card,
+    .alarm-center-card,
+    .user-card{
+        background:rgba(255,255,255,.94) !important;
+        border:1px solid rgba(215,224,219,.95) !important;
+        border-radius:24px !important;
+        box-shadow:var(--shadow-soft) !important;
+    }
+
+    .result-title,
+    .watch-title,
+    .new-record-title,
+    .alarm-center-title,
+    .product-board-main,
+    .topbox-main,
+    .user-card-title{
+        color:#132238 !important;
+    }
+
+    .mini,
+    .watch-sub,
+    .new-record-sub,
+    .alarm-center-sub,
+    .product-board-sub,
+    .topbox-sub,
+    .topbox-title,
+    .product-board-title,
+    .compact-note,
+    .user-card-sub{
+        color:#73857b !important;
+    }
+
+    .score-badge{
+        background:var(--green-soft) !important;
+        border:1px solid rgba(31,141,93,.28) !important;
+        color:var(--green-dark) !important;
+    }
+
+    .price-status,
+    .badge,
+    .warn{
+        background:#f8fbf9 !important;
+        border-color:#d8e1dc !important;
+        color:#374a3d !important;
+    }
+
+    .warn{
+        background:#fff8ea !important;
+        border-color:#f6d99d !important;
+        color:#8b6421 !important;
+    }
+
+    .user-pill{
+        border:1.5px solid rgba(31,141,93,.20) !important;
+        background:var(--green-soft) !important;
+        color:var(--green-dark) !important;
+        font-weight:900 !important;
+    }
+
+    .user-table-wrap{
+        background:rgba(255,255,255,.96) !important;
+        border:1px solid rgba(215,224,219,.95) !important;
+        border-radius:26px !important;
+        box-shadow:var(--shadow-soft) !important;
+        overflow:auto !important;
+    }
+
+    .user-table th{
+        background:#f7faf8 !important;
+        color:#5e6f65 !important;
+        border-bottom:1px solid #dce5df !important;
+    }
+
+    .user-table td{
+        background:#ffffff !important;
+        color:#132238 !important;
+        border-bottom:1px solid #edf2ee !important;
+    }
+
+    .stDataFrame, .stTable, [data-testid="stTable"]{
+        background:rgba(255,255,255,.96) !important;
+        border-radius:20px !important;
+    }
+
+    [data-testid="stExpander"]{
+        background:rgba(255,255,255,.92) !important;
+        border:1px solid rgba(215,224,219,.95) !important;
+        border-radius:22px !important;
+        box-shadow:var(--shadow-soft) !important;
+        overflow:hidden !important;
+    }
+
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpander"] div[role="button"]{
+        background:#fbfcfb !important;
+        color:#132238 !important;
+    }
+
+    [data-testid="stTextInput"] label,
+    [data-testid="stSelectbox"] label,
+    [data-testid="stNumberInput"] label,
+    [data-testid="stTextArea"] label,
+    [data-testid="stFileUploader"] label,
+    [data-testid="stMultiSelect"] label,
+    [data-testid="stSlider"] label,
+    [data-testid="stCheckbox"] label{
+        color:#31443b !important;
+        font-weight:850 !important;
+    }
+
+    [data-testid="stTextInput"] input,
+    [data-testid="stNumberInput"] input,
+    [data-testid="stTextArea"] textarea,
+    [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    [data-testid="stMultiSelect"] div[data-baseweb="select"] > div{
+        background:#ffffff !important;
+        border:1.5px solid #d7e0db !important;
+        color:#132238 !important;
+        border-radius:16px !important;
+        min-height:50px !important;
+        box-shadow:none !important;
+    }
+
+    [data-testid="stTextInput"] input::placeholder,
+    [data-testid="stTextArea"] textarea::placeholder{
+        color:#9aa8a0 !important;
+        opacity:1 !important;
+    }
+
+    [data-testid="stSlider"] [role="slider"]{
+        background:#1f8d5d !important;
+        border-color:#166544 !important;
+    }
+
+    [data-testid="stSlider"] .st-ae{
+        background:#b9dfcb !important;
+    }
+
+    [data-testid="stFileUploaderDropzone"]{
+        background:#fbfcfb !important;
+        border:1.5px dashed #cdd8d1 !important;
+        border-radius:20px !important;
+    }
+
+    [data-testid="stAlert"]{
+        border-radius:20px !important;
+        border:1px solid rgba(215,224,219,.95) !important;
+    }
+
+    [data-testid="stMarkdownContainer"] pre,
+    code{
+        background:#f7faf8 !important;
+        color:#132238 !important;
+        border:1px solid #dbe4de !important;
+        border-radius:14px !important;
+    }
+
+    .stTabs [data-baseweb="tab-list"]{
+        gap:12px !important;
+        background:transparent !important;
+        margin-bottom:12px !important;
+    }
+
+    .stTabs [data-baseweb="tab"]{
+        background:#ffffff !important;
+        border:1.5px solid #d7e0db !important;
+        border-radius:18px !important;
+        min-height:54px !important;
+        padding:0 20px !important;
+        color:#31443b !important;
+        font-weight:900 !important;
+        box-shadow:var(--shadow-soft) !important;
+    }
+
+    .stTabs [aria-selected="true"]{
+        background:linear-gradient(180deg, #22a267 0%, #1b8d5b 100%) !important;
+        color:#ffffff !important;
+        border-color:#1b8d5b !important;
+    }
+
+    @media (max-width: 900px){
+        .hero{
+            padding:22px 20px !important;
+            border-radius:28px !important;
+        }
+        .hero-title{
+            font-size:40px !important;
+        }
+        .hero-sub{
+            font-size:16px !important;
+        }
+        .section-head-title{
+            font-size:28px !important;
+        }
+    }
+    </style>
     """,
     unsafe_allow_html=True
 )
@@ -1111,6 +1853,57 @@ def query_param_ayarla(**kwargs):
         pass
 
 
+
+VARSAYILAN_YETKILER = {
+    "siteye_giris": True,
+    "csv_yukleme": True,
+    "analiz": True,
+    "rapor_indirme": True,
+    "kullanici_yonetimi": False,
+}
+
+
+def yetkileri_normalize_et(kayit: dict) -> dict:
+    yetkiler = dict(VARSAYILAN_YETKILER)
+
+    if isinstance(kayit.get("yetkiler"), dict):
+        for key, value in kayit.get("yetkiler", {}).items():
+            if key in yetkiler:
+                yetkiler[key] = bool(value)
+
+    if str(kayit.get("rol", "user")) == "admin":
+        for key in yetkiler:
+            yetkiler[key] = True
+
+    return yetkiler
+
+
+def aktif_kullanici_kaydi():
+    kullanici_adi = str(st.session_state.get("giris_kullanici_adi", "") or "").strip().lower()
+
+    if not kullanici_adi:
+        return None
+
+    return kullanicilari_yukle().get(kullanici_adi)
+
+
+def yetki_var(yetki_adi: str) -> bool:
+    kayit = aktif_kullanici_kaydi()
+
+    if not kayit:
+        return False
+
+    return bool(yetkileri_normalize_et(kayit).get(yetki_adi, False))
+
+
+def evet_hayir(value) -> str:
+    return "Evet" if bool(value) else "Hayır"
+
+
+def guvenli_html(value) -> str:
+    return html.escape(str(value if value is not None else ""))
+
+
 def varsayilan_kullanici_dosyasi_olustur():
     """
     İlk kurulumda yönetici kullanıcısını oluşturur.
@@ -1127,6 +1920,7 @@ def varsayilan_kullanici_dosyasi_olustur():
                 "ad": "Yönetici",
                 "rol": "admin",
                 "aktif": True,
+                "yetkiler": {**VARSAYILAN_YETKILER, "kullanici_yonetimi": True},
                 "kayit_tarihi": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
         ]
@@ -1169,6 +1963,11 @@ def kullanici_verisi_yukle() -> dict:
             # Artık yönetici onayı gerekmiyor; eski bekleyenleri de aktif yap.
             item["aktif"] = True
             degisti = True
+        if "yetkiler" not in item or not isinstance(item.get("yetkiler"), dict):
+            item["yetkiler"] = dict(VARSAYILAN_YETKILER)
+            if str(item.get("rol", "user")) == "admin":
+                item["yetkiler"] = {**VARSAYILAN_YETKILER, "kullanici_yonetimi": True}
+            degisti = True
 
     if degisti:
         try:
@@ -1207,6 +2006,9 @@ def kullanici_dogrula(kullanici_adi: str, sifre: str):
     if str(kayit.get("sifre_hash", "")) != sifre_hash_uret(sifre):
         return None, "Şifre yanlış."
 
+    if not yetkileri_normalize_et(kayit).get("siteye_giris", False):
+        return None, "Bu kullanıcının siteye giriş yetkisi kapalı."
+
     return kayit, ""
 
 
@@ -1240,6 +2042,7 @@ def kullanici_kayit_ol(kullanici_adi: str, ad: str, sifre: str, sifre_tekrar: st
             "ad": ad or kullanici_adi,
             "rol": "user",
             "aktif": True,
+            "yetkiler": dict(VARSAYILAN_YETKILER),
             "kayit_tarihi": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
     )
@@ -1396,38 +2199,116 @@ def kullanicilar_paneli():
         st.warning("Bu alan sadece yönetici için açık.")
         return
 
-    bolum_basligi("👥 Kullanıcılar", "Kayıt olan kullanıcıları gör, aktif/pasif yap, rol değiştir veya şifre güncelle.")
+    bolum_basligi("👥 Kullanıcı Paneli", "Tüm kullanıcı detayları, roller, durumlar ve yetkiler.")
+
+    if st.button("← Siteye dön", key="admin_siteye_don", use_container_width=False):
+        query_param_ayarla(admin=None)
+        st.rerun()
 
     veri = kullanici_verisi_yukle()
     kullanicilar = veri.get("kullanicilar", [])
+
+    toplam = len(kullanicilar)
+    aktif_sayi = sum(1 for k in kullanicilar if bool(k.get("aktif", False)))
+    admin_sayi = sum(1 for k in kullanicilar if str(k.get("rol", "user")) == "admin")
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Toplam kullanıcı", toplam)
+    c2.metric("Aktif kullanıcı", aktif_sayi)
+    c3.metric("Yönetici", admin_sayi)
+
+    st.divider()
 
     if not kullanicilar:
         st.info("Kullanıcı bulunamadı.")
         return
 
-    tablo_veri = []
+    satirlar = []
+
     for item in kullanicilar:
-        tablo_veri.append(
-            {
-                "Kullanıcı adı": item.get("kullanici_adi", ""),
-                "Ad": item.get("ad", ""),
-                "Rol": item.get("rol", "user"),
-                "Aktif": "Evet" if item.get("aktif", False) else "Hayır",
-                "Kayıt": item.get("kayit_tarihi", ""),
-            }
+        yetkiler = yetkileri_normalize_et(item)
+        satirlar.append(
+            f"""
+            <tr>
+                <td>{guvenli_html(item.get("kullanici_adi", ""))}</td>
+                <td>{guvenli_html(item.get("ad", ""))}</td>
+                <td>{guvenli_html(item.get("rol", "user"))}</td>
+                <td>{evet_hayir(item.get("aktif", False))}</td>
+                <td>{evet_hayir(yetkiler.get("siteye_giris"))}</td>
+                <td>{evet_hayir(yetkiler.get("csv_yukleme"))}</td>
+                <td>{evet_hayir(yetkiler.get("analiz"))}</td>
+                <td>{evet_hayir(yetkiler.get("rapor_indirme"))}</td>
+                <td>{evet_hayir(yetkiler.get("kullanici_yonetimi"))}</td>
+                <td>{guvenli_html(item.get("kayit_tarihi", ""))}</td>
+            </tr>
+            """
         )
 
-    st.dataframe(pd.DataFrame(tablo_veri), use_container_width=True, hide_index=True)
+    st.markdown(
+        f"""
+        <div class="user-table-wrap">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>Kullanıcı adı</th>
+                        <th>Ad / Firma</th>
+                        <th>Rol</th>
+                        <th>Aktif</th>
+                        <th>Giriş</th>
+                        <th>CSV</th>
+                        <th>Analiz</th>
+                        <th>Rapor</th>
+                        <th>Yönetim</th>
+                        <th>Kayıt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join(satirlar)}
+                </tbody>
+            </table>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.divider()
-    st.subheader("Kullanıcı işlemleri")
+    st.subheader("Kullanıcı detayları ve yetkiler")
 
     for i, item in enumerate(list(kullanicilar)):
         kullanici_adi = str(item.get("kullanici_adi", "") or "")
         rol = str(item.get("rol", "user") or "user")
         aktif = bool(item.get("aktif", False))
+        yetkiler = yetkileri_normalize_et(item)
 
-        with st.expander(f"{kullanici_adi} — {'Aktif' if aktif else 'Pasif'}", expanded=False):
+        st.markdown(
+            f"""
+            <div class="user-card">
+                <div class="user-card-head">
+                    <div>
+                        <div class="user-card-title">{guvenli_html(kullanici_adi)} · {guvenli_html(item.get("ad", ""))}</div>
+                        <div class="user-card-sub">Rol: {guvenli_html(rol)} · Durum: {"Aktif" if aktif else "Pasif"} · Kayıt: {guvenli_html(item.get("kayit_tarihi", ""))}</div>
+                    </div>
+                    <div class="user-pill">{"Yönetici" if rol == "admin" else "Kullanıcı"}</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        detay_json = {
+            "kullanici_adi": item.get("kullanici_adi", ""),
+            "ad": item.get("ad", ""),
+            "rol": item.get("rol", "user"),
+            "aktif": item.get("aktif", False),
+            "kayit_tarihi": item.get("kayit_tarihi", ""),
+            "sifre_hash": item.get("sifre_hash", ""),
+            "yetkiler": yetkiler,
+        }
+
+        with st.expander("Detay / işlem", expanded=False):
+            st.code(json.dumps(detay_json, ensure_ascii=False, indent=2), language="json")
+
+            st.markdown("##### Hesap işlemleri")
             c1, c2, c3, c4 = st.columns(4)
 
             with c1:
@@ -1454,6 +2335,8 @@ def kullanicilar_paneli():
                         st.warning("Ana yönetici rolü değiştirilemez.")
                     else:
                         veri["kullanicilar"][i]["rol"] = yeni_rol
+                        if yeni_rol == "admin":
+                            veri["kullanicilar"][i]["yetkiler"] = {**VARSAYILAN_YETKILER, "kullanici_yonetimi": True}
                         kullanici_dosyasi_kaydet(veri)
                         st.success("Rol değiştirildi.")
                         st.rerun()
@@ -1468,6 +2351,38 @@ def kullanicilar_paneli():
                         st.success("Kullanıcı silindi.")
                         st.rerun()
 
+            st.markdown("##### Yetkiler")
+            y1, y2, y3 = st.columns(3)
+
+            with y1:
+                siteye_giris = st.checkbox("Siteye giriş", value=yetkiler.get("siteye_giris", True), key=f"perm_site_{i}")
+                csv_yukleme = st.checkbox("CSV yükleme", value=yetkiler.get("csv_yukleme", True), key=f"perm_csv_{i}")
+
+            with y2:
+                analiz = st.checkbox("Analiz görünümü", value=yetkiler.get("analiz", True), key=f"perm_analiz_{i}")
+                rapor = st.checkbox("Rapor indirme", value=yetkiler.get("rapor_indirme", True), key=f"perm_rapor_{i}")
+
+            with y3:
+                kullanici_yonetimi = st.checkbox("Kullanıcı yönetimi", value=yetkiler.get("kullanici_yonetimi", False), key=f"perm_user_{i}")
+
+            if st.button("Yetkileri kaydet", key=f"perm_save_{i}"):
+                if kullanici_adi.lower() == "admin":
+                    veri["kullanicilar"][i]["yetkiler"] = {**VARSAYILAN_YETKILER, "kullanici_yonetimi": True}
+                    veri["kullanicilar"][i]["rol"] = "admin"
+                    veri["kullanicilar"][i]["aktif"] = True
+                else:
+                    veri["kullanicilar"][i]["yetkiler"] = {
+                        "siteye_giris": siteye_giris,
+                        "csv_yukleme": csv_yukleme,
+                        "analiz": analiz,
+                        "rapor_indirme": rapor,
+                        "kullanici_yonetimi": kullanici_yonetimi,
+                    }
+                kullanici_dosyasi_kaydet(veri)
+                st.success("Yetkiler kaydedildi.")
+                st.rerun()
+
+            st.markdown("##### Şifre")
             with st.form(f"sifre_sifirla_form_{i}"):
                 yeni_sifre = st.text_input("Yeni şifre", type="password", key=f"reset_pass_{i}")
                 kaydet = st.form_submit_button("Şifreyi güncelle")
@@ -1493,17 +2408,25 @@ def kullanicilar_paneli():
 
     if ekle:
         ok, mesaj = kullanici_kayit_ol(kullanici_adi, ad, sifre, sifre)
+
         if ok:
             veri = kullanici_verisi_yukle()
+
             for item in veri["kullanicilar"]:
                 if str(item.get("kullanici_adi", "")).lower() == kullanici_adi.lower():
                     item["rol"] = rol
                     item["aktif"] = aktif
+                    if rol == "admin":
+                        item["yetkiler"] = {**VARSAYILAN_YETKILER, "kullanici_yonetimi": True}
+                    else:
+                        item["yetkiler"] = dict(VARSAYILAN_YETKILER)
+
             kullanici_dosyasi_kaydet(veri)
             st.success("Kullanıcı eklendi.")
             st.rerun()
         else:
             st.error(mesaj)
+
 
 
 def lisans_kontrolu():
@@ -2887,8 +3810,8 @@ def sol_menu_oku() -> str:
     st.sidebar.markdown(
         """
         <div class="side-title-card">
-            <div class="side-title">🧭 Menü</div>
-            <div class="side-sub">Bölümler bağımsız kartlar halinde çalışır.</div>
+            <div class="side-title">🧭 Ana Menü</div>
+            <div class="side-sub">Dashboard tarzı bağımsız sayfa kartları. Filtreler ve sonuçlar aynı düzende çalışır.</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -3563,19 +4486,25 @@ def analiz(df: pd.DataFrame):
 
 def alt_csv_yukleme_alani():
     with st.expander("📁 CSV yükleme / veri değiştirme", expanded=False):
+        if not yetki_var("csv_yukleme"):
+            st.warning("Bu kullanıcı için CSV yükleme yetkisi kapalı.")
+            return
+
         st.caption("CSV yüklemek istersen buradan yükle. Yükleme sonrası sayfa otomatik yenilenir ve yüklenen CSV kullanılır.")
         uploaded = st.file_uploader(
             "Farklı CSV yükle",
             type=["csv"],
-            key="alt_csv_yukle_v39"
+            key="alt_csv_yukle"
         )
 
         if uploaded is not None:
             st.success(f"Yüklenen CSV aktif: {uploaded.name}")
 
-        if uploaded is not None and st.button("Yüklenen CSV'yi bırak, sunucudaki CSV'ye dön", key="csv_reset_v39"):
-            st.session_state.pop("alt_csv_yukle_v39", None)
+        if uploaded is not None and st.button("Yüklenen CSV'yi bırak, sunucudaki CSV'ye dön", key="csv_reset"):
+            st.session_state.pop("alt_csv_yukle", None)
             st.rerun()
+
+
 
 
 paket = lisans_kontrolu()
@@ -3620,7 +4549,7 @@ if st.session_state.get("hedef_sayfa"):
 paket_bilgi_goster(paket)
 
 if menu_secimi == "🏠 Özet":
-    bolum_basligi("🏠 Genel Özet", "Filtrelenen kayıtların kısa durumu, son güncelleme bilgisi ve hızlı fırsat kartları.")
+    bolum_basligi("🏠 Genel Özet", "Öne çıkan metrikler, son güncelleme bilgisi ve hızlı fırsat kartlarını tek panelde incele.")
     guncelleme_ozeti_goster()
     ozet(sonuc)
     st.markdown(
@@ -3639,7 +4568,7 @@ if menu_secimi == "🏠 Özet":
     urun_bazli_firsat_panosu(sonuc)
 
 elif menu_secimi == "🔎 Sonuçlar":
-    bolum_basligi("🔎 Sonuçlar", "Filtrelenen kayıtları kart, tablo veya analiz olarak incele. Kart görünümünde 10 kayıt daha yükleme vardır.")
+    bolum_basligi("🔎 Sonuçlar", "Filtrelenen kayıtları kart, tablo veya analiz görünümünde incele. Yeni tasarım daha net ve panel odaklı çalışır.")
     ozet(sonuc)
     st.divider()
 
@@ -3654,17 +4583,14 @@ elif menu_secimi == "🔎 Sonuçlar":
     elif gorunum == "Tablo":
         tablo(sonuc)
     else:
-        if premium_aktif(paket):
+        if yetki_var("analiz"):
             analiz(sonuc)
         else:
-            kilitli_ozellik(
-                "Analiz görünümü",
-                "Analiz görünümü aktif."
-            )
+            st.warning("Bu kullanıcı için analiz yetkisi kapalı.")
 
     st.divider()
 
-    if premium_aktif(paket):
+    if yetki_var("rapor_indirme"):
         st.download_button(
             "Filtrelenen sonuçları CSV indir",
             data=sonuc.to_csv(index=False, encoding="utf-8-sig"),
@@ -3672,10 +4598,7 @@ elif menu_secimi == "🔎 Sonuçlar":
             mime="text/csv",
         )
     else:
-        kilitli_ozellik(
-            "Rapor indirme",
-            "Rapor indirme aktif."
-        )
+        st.warning("Bu kullanıcı için rapor indirme yetkisi kapalı.")
 
 elif menu_secimi == "⭐ Fırsat Panosu":
     bolum_basligi("⭐ Fırsat Panosu", "Ürün türlerine göre öne çıkan ucuz ve yüksek puanlı kayıtlar.")
