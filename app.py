@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v30",
+    page_title="Depo Radarı v31",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -348,6 +348,112 @@ st.markdown(
         line-height: 1.45;
     }
 
+
+    .hero {
+        background:
+            radial-gradient(circle at top left, rgba(46, 204, 113, .26), transparent 34%),
+            radial-gradient(circle at top right, rgba(52, 152, 219, .20), transparent 32%),
+            linear-gradient(135deg, rgba(12, 35, 28, .88), rgba(8, 12, 18, .84));
+        border: 1px solid rgba(46, 204, 113, .28);
+        box-shadow: 0 18px 50px rgba(0,0,0,.22);
+    }
+    .hero-title {
+        letter-spacing: -1px;
+    }
+    .glass-panel {
+        border: 1px solid rgba(150,150,150,.18);
+        border-radius: 20px;
+        padding: 16px 18px;
+        background: linear-gradient(135deg, rgba(255,255,255,.055), rgba(255,255,255,.025));
+        box-shadow: 0 12px 34px rgba(0,0,0,.13);
+        margin-bottom: 14px;
+    }
+    .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 8px 0 12px 0;
+    }
+    .section-title {
+        font-size: 22px;
+        font-weight: 950;
+        letter-spacing: -.3px;
+    }
+    .section-sub {
+        font-size: 13px;
+        opacity: .72;
+        line-height: 1.35;
+    }
+    .summary-card {
+        border: 1px solid rgba(150,150,150,.18);
+        border-radius: 18px;
+        padding: 15px 16px;
+        min-height: 104px;
+        background:
+            linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
+        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+        margin-bottom: 10px;
+    }
+    .summary-icon {
+        font-size: 21px;
+        margin-bottom: 7px;
+    }
+    .summary-label {
+        font-size: 12px;
+        opacity: .70;
+        margin-bottom: 4px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+    }
+    .summary-value {
+        font-size: 23px;
+        font-weight: 950;
+        line-height: 1.1;
+    }
+    .result-card {
+        box-shadow: 0 10px 28px rgba(0,0,0,.12);
+        background:
+            linear-gradient(135deg, rgba(46,204,113,.07), rgba(255,255,255,.025));
+    }
+    .result-card:hover {
+        border-color: rgba(46,204,113,.45);
+        transform: translateY(-1px);
+        transition: .16s ease;
+    }
+    .load-box {
+        border: 1px dashed rgba(46,204,113,.45);
+        border-radius: 16px;
+        padding: 12px 14px;
+        background: rgba(46,204,113,.07);
+        margin: 8px 0 14px 0;
+    }
+    .load-text {
+        font-size: 13px;
+        opacity: .80;
+        margin-bottom: 8px;
+    }
+    .side-hint {
+        border: 1px solid rgba(150,150,150,.18);
+        border-radius: 14px;
+        padding: 10px 12px;
+        background: rgba(255,255,255,.035);
+        font-size: 13px;
+        line-height: 1.45;
+        margin-bottom: 8px;
+    }
+    .panel-badge {
+        display: inline-block;
+        border: 1px solid rgba(52,152,219,.44);
+        background: rgba(52,152,219,.12);
+        border-radius: 999px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 900;
+        margin-bottom: 8px;
+    }
+
     div[data-testid="stMetricValue"] {
         font-size: 28px;
     }
@@ -361,7 +467,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Tomruk, maden direği, kağıtlık odun ve diğer emvaller için filtreli ihale takip ekranı.</p>
-        <p class="small-note">Bu sürüm Türkiye geneli CSV dosyasını öncelikli okur. v30: arama kutusuna parti no yazınca da sonuç getirir.nı okur. v28: GitHub Actions günlük veri güncelleme altyapısı hazırlandı.</p>
+        <p class="small-note">Türkiye geneli veri için sayfalı gösterim, sol menü panel yönetimi ve daha modern arayüz. v31</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -955,7 +1061,7 @@ def yeni_kayitlar_panosu(df: pd.DataFrame):
             },
         )
 
-def alarm_merkezi_panosu(df: pd.DataFrame):
+def alarm_merkezi_panosu(df: pd.DataFrame, expanded: bool = False):
     liste = takip_listesi_oku()
 
     if not liste:
@@ -995,7 +1101,7 @@ def alarm_merkezi_panosu(df: pd.DataFrame):
             "sart": alarm_ozet_metni(sartlar),
         })
 
-    with st.expander("🚨 Alarm merkezi", expanded=bool(alarm_parcalari)):
+    with st.expander("🚨 Alarm merkezi", expanded=(expanded or bool(alarm_parcalari))):
         if not alarm_parcalari:
             st.info("Şu anda alarm şartına uyan kayıt yok.")
             st.caption("Takip listesine fiyat, fırsat puanı veya miktar şartı ekleyince burada otomatik görünecek.")
@@ -1075,8 +1181,8 @@ def alarm_merkezi_panosu(df: pd.DataFrame):
             },
         )
 
-def takip_listesi_panosu(df: pd.DataFrame):
-    with st.expander("📌 Takip listesi ve alarm şartları", expanded=False):
+def takip_listesi_panosu(df: pd.DataFrame, expanded: bool = False):
+    with st.expander("📌 Takip listesi", expanded=expanded):
         st.caption("Mevcut filtreyi kaydedebilir, alarm şartı ekleyebilir ve aynı takip koduyla kendi listen üzerinden geri dönebilirsin.")
 
         if st.session_state.get("takip_uygulandi_v22", False):
@@ -1694,6 +1800,87 @@ def sayi(value):
 
 
 
+
+def sol_panel_menusu_sec() -> str:
+    """
+    Sol açılır menüden ana panel seçimi.
+    Takip listesi ve alarm merkezi ana sonuçlardan ayrıldı.
+    """
+    if "aktif_panel_v31" not in st.session_state:
+        st.session_state["aktif_panel_v31"] = "Sonuçlar"
+
+    with st.sidebar.expander("🧭 Panel menüsü", expanded=True):
+        st.markdown(
+            """
+            <div class="side-hint">
+                Büyük Türkiye verisinde sonuçlar sayfa sayfa gösterilir.
+                Takip ve alarm ayrı panellerden yönetilir.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        if st.button("🏠 Sonuçlar", use_container_width=True, key="panel_sonuclar_v31"):
+            st.session_state["aktif_panel_v31"] = "Sonuçlar"
+            st.rerun()
+
+        if st.button("📌 Takip Listesi", use_container_width=True, key="panel_takip_v31"):
+            st.session_state["aktif_panel_v31"] = "Takip Listesi"
+            st.rerun()
+
+        if st.button("🚨 Alarm Merkezi", use_container_width=True, key="panel_alarm_v31"):
+            st.session_state["aktif_panel_v31"] = "Alarm Merkezi"
+            st.rerun()
+
+        aktif = st.session_state.get("aktif_panel_v31", "Sonuçlar")
+        st.markdown(f'<span class="panel-badge">Aktif: {aktif}</span>', unsafe_allow_html=True)
+
+    return st.session_state.get("aktif_panel_v31", "Sonuçlar")
+
+
+def gosterim_limiti_al(key: str, toplam: int, baslangic: int = 10) -> int:
+    if key not in st.session_state:
+        st.session_state[key] = baslangic
+
+    try:
+        st.session_state[key] = int(st.session_state[key])
+    except Exception:
+        st.session_state[key] = baslangic
+
+    if st.session_state[key] < baslangic:
+        st.session_state[key] = baslangic
+
+    return min(st.session_state[key], int(toplam))
+
+
+def daha_fazla_yukle_kontrolu(key: str, toplam: int, artis: int = 10, baslangic: int = 10):
+    mevcut = gosterim_limiti_al(key, toplam, baslangic)
+
+    st.markdown(
+        f"""
+        <div class="load-box">
+            <div class="load-text"><b>{toplam}</b> kayıttan <b>{mevcut}</b> kayıt gösteriliyor.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if toplam <= mevcut:
+        st.success("Tüm kayıtlar gösteriliyor.")
+        return
+
+    c1, c2 = st.columns([1, 1])
+
+    with c1:
+        if st.button(f"➕ Daha fazla yükle (+{artis})", key=f"{key}_more_btn", use_container_width=True):
+            st.session_state[key] = min(toplam, mevcut + artis)
+            st.rerun()
+
+    with c2:
+        if st.button("↩️ İlk 10 kayda dön", key=f"{key}_reset_btn", use_container_width=True):
+            st.session_state[key] = baslangic
+            st.rerun()
+
 def genel_arama_uygula(df: pd.DataFrame, arama: str) -> pd.DataFrame:
     """
     Sidebar arama kutusu artık sadece ürün adında değil;
@@ -1951,13 +2138,29 @@ def ozet(df: pd.DataFrame):
     supheli = int(df["supheli_fiyat"].sum()) if adet else 0
     en_yuksek_puan = df["firsat_puani"].max() if adet and "firsat_puani" in df.columns else None
 
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric("Kayıt", sayi(adet))
-    c2.metric("En ucuz", tl(en_ucuz))
-    c3.metric("Ortalama", tl(ort))
-    c4.metric("Toplam miktar", m3(toplam_miktar))
-    c5.metric("En yüksek puan", sayi(en_yuksek_puan))
-    c6.metric("Şüpheli fiyat", sayi(supheli))
+    kartlar_ozet = [
+        ("📦", "Kayıt", sayi(adet)),
+        ("💸", "En ucuz", tl(en_ucuz)),
+        ("📊", "Ortalama", tl(ort)),
+        ("🪵", "Toplam miktar", m3(toplam_miktar)),
+        ("⭐", "En yüksek puan", sayi(en_yuksek_puan)),
+        ("⚠️", "Şüpheli fiyat", sayi(supheli)),
+    ]
+
+    cols = st.columns(6)
+
+    for col, (ikon, baslik, deger) in zip(cols, kartlar_ozet):
+        with col:
+            st.markdown(
+                f"""
+                <div class="summary-card">
+                    <div class="summary-icon">{ikon}</div>
+                    <div class="summary-label">{baslik}</div>
+                    <div class="summary-value">{deger}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 def ozet_kutu(baslik, row):
@@ -2175,31 +2378,24 @@ def kartlar(df: pd.DataFrame):
         return
 
     toplam = len(df)
+    adet = gosterim_limiti_al("kart_limit_v31", toplam, baslangic=10)
 
-    # Streamlit slider, min_value ve max_value aynı olunca hata verebiliyor.
-    # Tek kayıt kalırsa slider göstermeden doğrudan 1 kart gösteriyoruz.
-    if toplam == 1:
-        adet = 1
-        st.caption("1 kart gösteriliyor.")
-    else:
-        ust = min(50, toplam)
-        varsayilan = min(20, toplam)
-
-        # Ek güvenlik: ust 1'e düşerse slider açma.
-        if ust <= 1:
-            adet = 1
-            st.caption("1 kart gösteriliyor.")
-        else:
-            adet = st.slider(
-                "Gösterilecek kart sayısı",
-                min_value=1,
-                max_value=ust,
-                value=varsayilan,
-                key="kart_sayisi_v9"
-            )
+    st.markdown(
+        """
+        <div class="section-head">
+            <div>
+                <div class="section-title">Kart görünümü</div>
+                <div class="section-sub">Türkiye geneli veri büyük olduğu için ilk 10 kayıt gösterilir. Daha fazla yükle ile 10'ar kayıt eklenir.</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     for _, row in df.head(adet).iterrows():
         kart(row)
+
+    daha_fazla_yukle_kontrolu("kart_limit_v31", toplam, artis=10, baslangic=10)
 
 
 def tablo(df: pd.DataFrame):
@@ -2247,8 +2443,24 @@ def tablo(df: pd.DataFrame):
         if kolon in gorunen.columns:
             gorunen[kolon] = gorunen[kolon].apply(lambda x: temiz_metin(x))
 
+    toplam = len(gorunen)
+    adet = gosterim_limiti_al("tablo_limit_v31", toplam, baslangic=10)
+    gorunen_sayfali = gorunen.head(adet)
+
+    st.markdown(
+        """
+        <div class="section-head">
+            <div>
+                <div class="section-title">Tablo görünümü</div>
+                <div class="section-sub">Tablo ilk 10 kayıtla açılır. Daha fazla yükle ile 10'ar kayıt eklenir.</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.dataframe(
-        gorunen,
+        gorunen_sayfali,
         use_container_width=True,
         hide_index=True,
         column_config={
@@ -2278,6 +2490,8 @@ def tablo(df: pd.DataFrame):
             "kaynak_link": st.column_config.LinkColumn("Kaynakta Aç"),
         },
     )
+
+    daha_fazla_yukle_kontrolu("tablo_limit_v31", toplam, artis=10, baslangic=10)
 
 
 def analiz(df: pd.DataFrame):
@@ -2344,6 +2558,7 @@ if df_raw.empty:
 paket = lisans_kontrolu()
 
 takip_kullanici_kodu_al()
+aktif_panel = sol_panel_menusu_sec()
 
 df = hazirla(df_raw)
 takip_hedefini_uygula()
@@ -2369,15 +2584,21 @@ with st.expander("🌲 Ürün bazlı fırsat panosunu göster / gizle", expanded
 
 yeni_kayitlar_panosu(sonuc)
 
-alarm_merkezi_panosu(df)
-
-takip_listesi_panosu(df)
-
 st.divider()
+
+if aktif_panel == "Takip Listesi":
+    st.markdown('<div class="section-title">📌 Takip Listesi</div><div class="section-sub">Kaydedilen filtreler ve alarm şartları burada yönetilir.</div>', unsafe_allow_html=True)
+    takip_listesi_panosu(df, expanded=True)
+    st.stop()
+
+if aktif_panel == "Alarm Merkezi":
+    st.markdown('<div class="section-title">🚨 Alarm Merkezi</div><div class="section-sub">Takip listendeki alarm şartlarına uyan kayıtlar burada ayrı görünür.</div>', unsafe_allow_html=True)
+    alarm_merkezi_panosu(df, expanded=True)
+    st.stop()
 
 g1, g2 = st.columns([1, 1])
 with g1:
-    gorunum = st.radio("Görünüm", ["Kartlar", "Tablo", "Analiz"], horizontal=True, key="gorunum_v6")
+    gorunum = st.radio("Görünüm", ["Kartlar", "Tablo", "Analiz"], horizontal=True, key="gorunum_v31")
 with g2:
     st.write("")
 
