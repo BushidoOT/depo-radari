@@ -9,6 +9,10 @@ import pandas as pd
 import streamlit as st
 
 
+# =========================================================
+# DEPO RADARI - TEMIZ, MODERN, STABIL SITE
+# =========================================================
+
 st.set_page_config(
     page_title="Depo Radarı",
     page_icon="🌲",
@@ -31,7 +35,6 @@ CSV_ONCELIKLI_DOSYALAR = [
 KULLANICI_DOSYASI = "depo_radari_kullanicilar.json"
 OTURUM_GIZLI_ANAHTAR = "depo_radari_2026_guvenli_oturum"
 
-
 VARSAYILAN_YETKILER = {
     "siteye_giris": True,
     "csv_yukleme": True,
@@ -40,6 +43,10 @@ VARSAYILAN_YETKILER = {
     "kullanici_yonetimi": False,
 }
 
+
+# =========================================================
+# TASARIM
+# =========================================================
 
 st.markdown(
     """
@@ -55,6 +62,10 @@ st.markdown(
         --green:#1f8d5d;
         --green-dark:#176948;
         --green-soft:#e8f7ef;
+        --red:#dc2626;
+        --orange:#d97706;
+        --blue:#2563eb;
+        --purple:#7048e8;
         --shadow:0 18px 45px rgba(15,23,42,.08);
         --shadow-soft:0 10px 25px rgba(15,23,42,.055);
     }
@@ -67,27 +78,23 @@ st.markdown(
         color:var(--text) !important;
     }
 
-    header[data-testid="stHeader"]{
-        background:transparent !important;
-    }
+    header[data-testid="stHeader"]{background:transparent !important;}
 
     .block-container{
-        max-width:1420px;
-        padding-top:1.4rem !important;
-        padding-bottom:2.5rem !important;
+        max-width:1450px;
+        padding-top:1.2rem !important;
+        padding-bottom:2.8rem !important;
     }
 
     section[data-testid="stSidebar"]{
-        background:rgba(248,249,247,.94) !important;
+        background:rgba(248,249,247,.96) !important;
         border-right:1px solid rgba(210,221,214,.95) !important;
     }
 
-    section[data-testid="stSidebar"] *{
-        color:var(--text) !important;
-    }
+    section[data-testid="stSidebar"] *{color:var(--text) !important;}
 
     .hero{
-        background:rgba(255,255,255,.92);
+        background:rgba(255,255,255,.94);
         border:1px solid rgba(215,224,219,.95);
         border-radius:34px;
         padding:30px 32px;
@@ -128,11 +135,11 @@ st.markdown(
     }
 
     .hero-sub{
-        max-width:820px;
+        max-width:860px;
         font-size:17px;
         line-height:1.58;
         color:var(--muted);
-        font-weight:700;
+        font-weight:720;
         margin:0;
     }
 
@@ -207,30 +214,19 @@ st.markdown(
     .data-card,
     .result-card,
     .user-card,
-    .user-table-wrap{
+    .user-table-wrap,
+    .help-card,
+    .detail-box{
         background:rgba(255,255,255,.94) !important;
         border:1px solid rgba(215,224,219,.95) !important;
         border-radius:24px !important;
         box-shadow:var(--shadow-soft) !important;
     }
 
-    div[data-testid="stMetric"]{
-        padding:10px 8px !important;
-    }
-
-    div[data-testid="stMetric"] *{
-        color:var(--text) !important;
-    }
-
-    div[data-testid="stMetricLabel"] p{
-        color:var(--muted) !important;
-        font-weight:900 !important;
-    }
-
-    div[data-testid="stMetricValue"]{
-        font-weight:950 !important;
-        letter-spacing:-.55px !important;
-    }
+    div[data-testid="stMetric"]{padding:10px 8px !important;}
+    div[data-testid="stMetric"] *{color:var(--text) !important;}
+    div[data-testid="stMetricLabel"] p{color:var(--muted) !important; font-weight:900 !important;}
+    div[data-testid="stMetricValue"]{font-weight:950 !important; letter-spacing:-.55px !important;}
 
     .data-card{
         padding:18px 18px;
@@ -299,17 +295,10 @@ st.markdown(
         margin:0 6px 8px 0;
     }
 
-    .pill.green{
-        background:var(--green-soft);
-        border-color:rgba(31,141,93,.25);
-        color:var(--green-dark);
-    }
-
-    .pill.yellow{
-        background:#fff8e6;
-        border-color:#f5d88f;
-        color:#8a621d;
-    }
+    .pill.green{background:var(--green-soft); border-color:rgba(31,141,93,.25); color:var(--green-dark);}
+    .pill.yellow{background:#fff8e6; border-color:#f5d88f; color:#8a621d;}
+    .pill.red{background:#fff0f0; border-color:#f5b4b4; color:#a51c1c;}
+    .pill.blue{background:#edf4ff; border-color:#bfd6ff; color:#164a9f;}
 
     .product-tomruk{border-left:8px solid #d7a600 !important; background:#fff9db !important;}
     .product-maden{border-left:8px solid #276ef1 !important; background:#e9f1ff !important;}
@@ -348,7 +337,8 @@ st.markdown(
     [data-testid="stTextInput"] input,
     [data-testid="stNumberInput"] input,
     [data-testid="stTextArea"] textarea,
-    [data-testid="stSelectbox"] div[data-baseweb="select"] > div{
+    [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    [data-testid="stMultiSelect"] div[data-baseweb="select"] > div{
         background:#ffffff !important;
         border:1.5px solid #d7e0db !important;
         color:var(--text) !important;
@@ -362,7 +352,8 @@ st.markdown(
     [data-testid="stNumberInput"] label,
     [data-testid="stFileUploader"] label,
     [data-testid="stCheckbox"] label,
-    [data-testid="stSlider"] label{
+    [data-testid="stSlider"] label,
+    [data-testid="stMultiSelect"] label{
         color:#31443b !important;
         font-weight:850 !important;
     }
@@ -375,21 +366,10 @@ st.markdown(
         overflow:hidden !important;
     }
 
-    [data-testid="stExpander"] *{
-        color:var(--text) !important;
-    }
+    [data-testid="stExpander"] *{color:var(--text) !important;}
 
-    .user-table-wrap{
-        overflow:auto;
-        margin:14px 0 22px 0;
-    }
-
-    .user-table{
-        width:100%;
-        min-width:920px;
-        border-collapse:collapse;
-    }
-
+    .user-table-wrap{overflow:auto; margin:14px 0 22px 0;}
+    .user-table{width:100%; min-width:920px; border-collapse:collapse;}
     .user-table th{
         background:#f7faf8;
         color:#5e6f65;
@@ -400,7 +380,6 @@ st.markdown(
         font-weight:950;
         white-space:nowrap;
     }
-
     .user-table td{
         background:#ffffff;
         color:var(--text);
@@ -410,23 +389,9 @@ st.markdown(
         white-space:nowrap;
     }
 
-    .user-card{
-        padding:18px 20px;
-        margin:16px 0 10px 0;
-    }
-
-    .user-card-title{
-        font-size:21px;
-        font-weight:950;
-        color:var(--text);
-    }
-
-    .user-card-sub{
-        color:var(--muted);
-        font-size:14px;
-        font-weight:700;
-        margin-top:4px;
-    }
+    .user-card{padding:18px 20px; margin:16px 0 10px 0;}
+    .user-card-title{font-size:21px; font-weight:950; color:var(--text);}
+    .user-card-sub{color:var(--muted); font-size:14px; font-weight:700; margin-top:4px;}
 
     .user-pill{
         display:inline-block;
@@ -437,6 +402,16 @@ st.markdown(
         padding:8px 13px;
         font-weight:950;
     }
+
+    .help-card{padding:20px; min-height:150px;}
+    .help-card h3{margin:0 0 8px 0; color:var(--text);}
+    .help-card p{color:var(--muted); font-weight:700; line-height:1.55;}
+
+    .detail-box{padding:20px; margin-bottom:18px;}
+    .detail-row{display:grid; grid-template-columns:170px 1fr; gap:12px; padding:8px 0; border-bottom:1px solid #edf2ee;}
+    .detail-row:last-child{border-bottom:none;}
+    .detail-key{color:var(--muted); font-weight:900;}
+    .detail-val{color:var(--text); font-weight:850;}
 
     .stTabs [data-baseweb="tab-list"]{gap:12px;}
     .stTabs [data-baseweb="tab"]{
@@ -458,8 +433,6 @@ st.markdown(
         border:1px solid rgba(215,224,219,.95) !important;
     }
 
-    .hide-row{display:none;}
-
     @media (max-width: 900px){
         .hero-title{font-size:38px;}
         .section-title{font-size:27px;}
@@ -471,19 +444,23 @@ st.markdown(
 )
 
 
-def h(text):
-    return html_escape(str(text if text is not None else ""))
-
+# =========================================================
+# GENEL YARDIMCI FONKSIYONLAR
+# =========================================================
 
 def html_escape(text: str) -> str:
     return (
-        str(text)
+        str(text if text is not None else "")
         .replace("&", "&amp;")
         .replace("<", "&lt;")
         .replace(">", "&gt;")
         .replace('"', "&quot;")
         .replace("'", "&#x27;")
     )
+
+
+def h(text):
+    return html_escape(str(text if text is not None else ""))
 
 
 def sifre_hash(s: str) -> str:
@@ -516,6 +493,32 @@ def qp_set(**kwargs):
     except Exception:
         pass
 
+
+def fmt_tl(v):
+    try:
+        if pd.isna(v):
+            return "-"
+        return f"{float(v):,.0f} TL".replace(",", ".")
+    except Exception:
+        return "-"
+
+
+def fmt_m3(v):
+    try:
+        if pd.isna(v):
+            return "-"
+        return f"{float(v):,.2f} m³".replace(",", "X").replace(".", ",").replace("X", ".")
+    except Exception:
+        return "-"
+
+
+def to_num(s):
+    return pd.to_numeric(s, errors="coerce")
+
+
+# =========================================================
+# KULLANICI SISTEMI
+# =========================================================
 
 def kullanici_dosyasi_olustur():
     path = Path(KULLANICI_DOSYASI)
@@ -552,8 +555,8 @@ def kullanici_verisi_yukle() -> dict:
         data = {"kullanicilar": []}
 
     data.setdefault("kullanicilar", [])
-
     degisti = False
+
     for u in data["kullanicilar"]:
         u.setdefault("ad", u.get("kullanici_adi", ""))
         u.setdefault("rol", "admin" if str(u.get("kullanici_adi", "")).lower() == "admin" else "user")
@@ -682,6 +685,109 @@ def oturum_queryden_yukle():
         st.session_state["giris_rol"] = str(u.get("rol", "user"))
 
 
+# =========================================================
+# VERI
+# =========================================================
+
+def mevcut_csvler():
+    found = []
+    for f in CSV_ONCELIKLI_DOSYALAR:
+        if Path(f).exists():
+            found.append(f)
+    for f in sorted(glob.glob("*.csv")):
+        if f not in found:
+            found.append(f)
+    return found
+
+
+def csv_sec():
+    files = mevcut_csvler()
+    return files[0] if files else ""
+
+
+@st.cache_data(show_spinner=False)
+def csv_oku(path: str, mtime: float):
+    if not path or not Path(path).exists():
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(path, encoding="utf-8-sig")
+    except Exception:
+        try:
+            return pd.read_csv(path, encoding="cp1254")
+        except Exception:
+            return pd.DataFrame()
+
+
+def ensure_cols(df: pd.DataFrame):
+    cols = [
+        "ihale_id", "ihale_no", "ihale_tipi", "oim", "obm", "cografi_bolge", "il",
+        "parti_no", "urun_adi", "urun_turu", "agac_turu", "sinif", "boy_kodu",
+        "cap_kodu", "parti_durum", "miktar_m3_hesap", "muhammen_birim_fiyat",
+        "teminat_tutari", "toplam_muhammen_hesap", "kaynak_link", "kayit_tarihi",
+        "guncelleme_id",
+    ]
+    for c in cols:
+        if c not in df.columns:
+            df[c] = ""
+    return df
+
+
+def hazirla(df: pd.DataFrame):
+    df = df.copy()
+    df = ensure_cols(df)
+
+    for c in [
+        "miktar_m3_hesap", "muhammen_birim_fiyat", "toplam_muhammen_hesap",
+        "teminat_tutari", "parti_no", "ihale_no", "ihale_id",
+    ]:
+        df[c] = to_num(df[c])
+
+    for c in df.columns:
+        if c not in [
+            "miktar_m3_hesap", "muhammen_birim_fiyat", "toplam_muhammen_hesap",
+            "teminat_tutari", "parti_no", "ihale_no", "ihale_id",
+        ]:
+            df[c] = df[c].fillna("").astype(str)
+
+    df["puan_kategorisi"] = (
+        df["agac_turu"].replace("", "Genel").astype(str).str.strip() + " " +
+        df["urun_turu"].replace("", "Ürün").astype(str).str.strip()
+    ).str.strip()
+
+    df["firsat_puani"] = 50.0
+
+    for _, idx in df.groupby("puan_kategorisi").groups.items():
+        g = df.loc[idx]
+        fiyat = g["muhammen_birim_fiyat"]
+        miktar = g["miktar_m3_hesap"]
+
+        fiyat_score = pd.Series(50, index=g.index, dtype=float)
+        miktar_score = pd.Series(50, index=g.index, dtype=float)
+
+        if fiyat.notna().sum() > 1 and fiyat.max() != fiyat.min():
+            fiyat_score = 100 - ((fiyat - fiyat.min()) / (fiyat.max() - fiyat.min()) * 100)
+
+        if miktar.notna().sum() > 1 and miktar.max() != miktar.min():
+            miktar_score = ((miktar - miktar.min()) / (miktar.max() - miktar.min()) * 100)
+
+        kalite = pd.Series(50, index=g.index, dtype=float)
+        kalite += g["sinif"].str.contains("1", case=False, na=False).astype(int) * 15
+        kalite += g["boy_kodu"].str.contains("uzun|orta", case=False, na=False).astype(int) * 8
+        kalite += g["cap_kodu"].str.contains("kalın|ince", case=False, na=False).astype(int) * 5
+
+        df.loc[idx, "firsat_puani"] = (
+            fiyat_score * 0.55 + miktar_score * 0.25 + kalite.clip(0, 100) * 0.20
+        ).round(0)
+
+    df["firsat_puani"] = df["firsat_puani"].fillna(50).clip(0, 100).astype(int)
+
+    return df
+
+
+# =========================================================
+# UI YARDIMCI
+# =========================================================
+
 def hero():
     st.markdown(
         """
@@ -693,6 +799,18 @@ def hero():
                 </div>
                 <div class="hero-pill">● Yeşil Panel</div>
             </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def section(title: str, sub: str = ""):
+    st.markdown(
+        f"""
+        <div class="section-head">
+            <div class="section-title">{h(title)}</div>
+            <div class="section-sub">{h(sub)}</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -717,7 +835,10 @@ def login_ekrani():
                 if basarili:
                     if hatirla:
                         u = kullanicilar_dict()[ka.strip().lower()]
-                        qp_set(u=ka.strip().lower(), oturum=token_uret(ka.strip().lower(), u.get("sifre_hash", "")))
+                        qp_set(
+                            u=ka.strip().lower(),
+                            oturum=token_uret(ka.strip().lower(), u.get("sifre_hash", "")),
+                        )
                     st.success("Giriş başarılı.")
                     st.rerun()
                 else:
@@ -770,228 +891,18 @@ def sidebar_oturum():
         st.rerun()
 
 
-def section(title: str, sub: str = ""):
-    st.markdown(
-        f"""
-        <div class="section-head">
-            <div class="section-title">{h(title)}</div>
-            <div class="section-sub">{h(sub)}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def mevcut_csvler():
-    found = []
-    for f in CSV_ONCELIKLI_DOSYALAR:
-        if Path(f).exists():
-            found.append(f)
-    for f in sorted(glob.glob("*.csv")):
-        if f not in found:
-            found.append(f)
-    return found
-
-
-def csv_sec():
-    files = mevcut_csvler()
-    return files[0] if files else ""
-
-
-@st.cache_data(show_spinner=False)
-def csv_oku(path: str, mtime: float):
-    if not path or not Path(path).exists():
-        return pd.DataFrame()
-    try:
-        return pd.read_csv(path, encoding="utf-8-sig")
-    except Exception:
-        try:
-            return pd.read_csv(path, encoding="cp1254")
-        except Exception:
-            return pd.DataFrame()
-
-
-def to_num(s):
-    return pd.to_numeric(s, errors="coerce")
-
-
-def ensure_cols(df: pd.DataFrame):
-    cols = [
-        "ihale_id", "ihale_no", "ihale_tipi", "oim", "obm", "cografi_bolge", "il",
-        "parti_no", "urun_adi", "urun_turu", "agac_turu", "sinif", "boy_kodu",
-        "cap_kodu", "parti_durum", "miktar_m3_hesap", "muhammen_birim_fiyat",
-        "teminat_tutari", "toplam_muhammen_hesap", "kaynak_link", "kayit_tarihi",
-        "guncelleme_id",
-    ]
-    for c in cols:
-        if c not in df.columns:
-            df[c] = ""
-    return df
-
-
-def hazirla(df: pd.DataFrame):
-    df = df.copy()
-    df = ensure_cols(df)
-
-    for c in ["miktar_m3_hesap", "muhammen_birim_fiyat", "toplam_muhammen_hesap", "teminat_tutari", "parti_no", "ihale_no", "ihale_id"]:
-        df[c] = to_num(df[c])
-
-    for c in df.columns:
-        if c not in ["miktar_m3_hesap", "muhammen_birim_fiyat", "toplam_muhammen_hesap", "teminat_tutari", "parti_no", "ihale_no", "ihale_id"]:
-            df[c] = df[c].fillna("").astype(str)
-
-    df["puan_kategorisi"] = (
-        df["agac_turu"].replace("", "Genel").astype(str).str.strip() + " " +
-        df["urun_turu"].replace("", "Ürün").astype(str).str.strip()
-    ).str.strip()
-
-    # Grup içinde ucuzluk + miktar + kalite benzeri basit puan
-    df["firsat_puani"] = 50.0
-    for _, idx in df.groupby("puan_kategorisi").groups.items():
-        g = df.loc[idx]
-        fiyat = g["muhammen_birim_fiyat"]
-        miktar = g["miktar_m3_hesap"]
-
-        fiyat_score = pd.Series(50, index=g.index, dtype=float)
-        miktar_score = pd.Series(50, index=g.index, dtype=float)
-
-        if fiyat.notna().sum() > 1 and fiyat.max() != fiyat.min():
-            fiyat_score = 100 - ((fiyat - fiyat.min()) / (fiyat.max() - fiyat.min()) * 100)
-        if miktar.notna().sum() > 1 and miktar.max() != miktar.min():
-            miktar_score = ((miktar - miktar.min()) / (miktar.max() - miktar.min()) * 100)
-
-        kalite = pd.Series(50, index=g.index, dtype=float)
-        kalite += g["sinif"].str.contains("1", case=False, na=False).astype(int) * 15
-        kalite += g["boy_kodu"].str.contains("uzun|orta", case=False, na=False).astype(int) * 8
-        kalite += g["cap_kodu"].str.contains("kalın|ince", case=False, na=False).astype(int) * 5
-
-        df.loc[idx, "firsat_puani"] = (fiyat_score * 0.55 + miktar_score * 0.25 + kalite.clip(0, 100) * 0.20).round(0)
-
-    df["firsat_puani"] = df["firsat_puani"].fillna(50).clip(0, 100).astype(int)
-
-    return df
-
-
-def fmt_tl(v):
-    try:
-        if pd.isna(v):
-            return "-"
-        return f"{float(v):,.0f} TL".replace(",", ".")
-    except Exception:
-        return "-"
-
-
-def fmt_m3(v):
-    try:
-        if pd.isna(v):
-            return "-"
-        return f"{float(v):,.2f} m³".replace(",", "X").replace(".", ",").replace("X", ".")
-    except Exception:
-        return "-"
-
-
-def secenek(df, kolon):
-    if kolon not in df.columns:
-        return ["Tümü"]
-    vals = sorted([x for x in df[kolon].dropna().astype(str).str.strip().unique().tolist() if x and x.lower() != "nan"])
-    return ["Tümü"] + vals
-
-
-def genel_arama(df, q):
-    q = str(q or "").strip()
-    if not q:
-        return df
-    cols = ["parti_no", "ihale_no", "ihale_id", "urun_adi", "urun_turu", "agac_turu", "oim", "obm", "cografi_bolge", "il", "sinif", "boy_kodu", "cap_kodu"]
-    mask = pd.Series(False, index=df.index)
-    for c in cols:
-        if c in df.columns:
-            mask = mask | df[c].astype(str).str.contains(q, case=False, na=False)
-    return df[mask]
-
-
-def filtrele(df):
-    st.sidebar.markdown(
-        """
-        <div class="side-card">
-            <div class="side-title">🔎 Filtreler</div>
-            <div class="side-sub">Önce bölge seç. Sonra il, OBM ve OİM kademeli açılır.</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    q = st.sidebar.text_input("Genel arama", placeholder="Parti no, ihale no, Karaçam, tomruk...")
-    sonuc = genel_arama(df, q)
-
-    bolge = st.sidebar.selectbox("Coğrafi Bölge", secenek(sonuc, "cografi_bolge"))
-    if bolge != "Tümü":
-        sonuc = sonuc[sonuc["cografi_bolge"] == bolge]
-
-        il = st.sidebar.selectbox("İl", secenek(sonuc, "il"))
-        if il != "Tümü":
-            sonuc = sonuc[sonuc["il"] == il]
-
-            obm = st.sidebar.selectbox("OBM", secenek(sonuc, "obm"))
-            if obm != "Tümü":
-                sonuc = sonuc[sonuc["obm"] == obm]
-
-                oim = st.sidebar.selectbox("OİM", secenek(sonuc, "oim"))
-                if oim != "Tümü":
-                    sonuc = sonuc[sonuc["oim"] == oim]
-    else:
-        st.sidebar.info("Detay filtreleri açmak için önce bölge seç.")
-
-    if bolge != "Tümü":
-        urun = st.sidebar.selectbox("Ürün Türü", secenek(sonuc, "urun_turu"))
-        if urun != "Tümü":
-            sonuc = sonuc[sonuc["urun_turu"] == urun]
-
-        agac = st.sidebar.selectbox("Ağaç Türü", secenek(sonuc, "agac_turu"))
-        if agac != "Tümü":
-            sonuc = sonuc[sonuc["agac_turu"] == agac]
-
-        sinif = st.sidebar.selectbox("Sınıf", secenek(sonuc, "sinif"))
-        if sinif != "Tümü":
-            sonuc = sonuc[sonuc["sinif"] == sinif]
-
-        boy = st.sidebar.selectbox("Boy Kodu", secenek(sonuc, "boy_kodu"))
-        if boy != "Tümü":
-            sonuc = sonuc[sonuc["boy_kodu"] == boy]
-
-        cap = st.sidebar.selectbox("Çap Kodu", secenek(sonuc, "cap_kodu"))
-        if cap != "Tümü":
-            sonuc = sonuc[sonuc["cap_kodu"] == cap]
-
-    if not sonuc.empty and sonuc["muhammen_birim_fiyat"].notna().any():
-        min_f, max_f = int(sonuc["muhammen_birim_fiyat"].min()), int(sonuc["muhammen_birim_fiyat"].max())
-        if min_f != max_f:
-            ar = st.sidebar.slider("Birim fiyat", min_f, max_f, (min_f, max_f), step=100)
-            sonuc = sonuc[(sonuc["muhammen_birim_fiyat"] >= ar[0]) & (sonuc["muhammen_birim_fiyat"] <= ar[1])]
-
-    sort = st.sidebar.selectbox("Sıralama", ["Fırsat puanı yüksek", "En ucuz fiyat", "En yüksek miktar", "Parti no artan"])
-    if not sonuc.empty:
-        if sort == "Fırsat puanı yüksek":
-            sonuc = sonuc.sort_values(["firsat_puani", "muhammen_birim_fiyat"], ascending=[False, True])
-        elif sort == "En ucuz fiyat":
-            sonuc = sonuc.sort_values("muhammen_birim_fiyat", ascending=True)
-        elif sort == "En yüksek miktar":
-            sonuc = sonuc.sort_values("miktar_m3_hesap", ascending=False)
-        elif sort == "Parti no artan":
-            sonuc = sonuc.sort_values("parti_no", ascending=True)
-
-    return sonuc
-
-
 def menu():
     opts = [
-        ("🏠", "Özet"),
-        ("🔎", "Sonuçlar"),
-        ("⭐", "Fırsat Panosu"),
+        ("🏠", "Ana Sayfa"),
+        ("🔎", "İhaleler"),
+        ("⭐", "Fırsatlar"),
+        ("📊", "Analiz"),
         ("🆕", "Yeni Kayıtlar"),
+        ("📘", "Kılavuz"),
     ]
 
     if "sayfa" not in st.session_state:
-        st.session_state["sayfa"] = "🏠 Özet"
+        st.session_state["sayfa"] = "🏠 Ana Sayfa"
 
     st.sidebar.markdown(
         """
@@ -1014,30 +925,6 @@ def menu():
     return st.session_state["sayfa"]
 
 
-def csv_yukleme_alani():
-    with st.expander("📁 CSV yükleme / veri değiştirme", expanded=False):
-        if not yetki_var("csv_yukleme"):
-            st.warning("Bu kullanıcı için CSV yükleme yetkisi kapalı.")
-            return None
-        uploaded = st.file_uploader("Farklı CSV yükle", type=["csv"], key="csv_upload")
-        if uploaded is not None:
-            st.success(f"Yüklenen CSV aktif: {uploaded.name}")
-        return uploaded
-
-
-def ozet_kartlari(df):
-    toplam = len(df)
-    ihale = df["ihale_no"].dropna().nunique() if "ihale_no" in df else 0
-    ort_fiyat = df["muhammen_birim_fiyat"].dropna().mean() if "muhammen_birim_fiyat" in df else 0
-    toplam_m3 = df["miktar_m3_hesap"].dropna().sum() if "miktar_m3_hesap" in df else 0
-
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Kayıt", f"{toplam:,}".replace(",", "."))
-    c2.metric("İhale", f"{ihale:,}".replace(",", "."))
-    c3.metric("Ort. fiyat", fmt_tl(ort_fiyat))
-    c4.metric("Toplam miktar", fmt_m3(toplam_m3))
-
-
 def urun_class(urun):
     u = str(urun or "").lower()
     if "tomruk" in u:
@@ -1053,13 +940,145 @@ def urun_class(urun):
     return ""
 
 
-def firsat_panolar(df):
+def secenek(df, kolon):
+    if kolon not in df.columns:
+        return ["Tümü"]
+    vals = sorted([
+        x for x in df[kolon].dropna().astype(str).str.strip().unique().tolist()
+        if x and x.lower() != "nan"
+    ])
+    return ["Tümü"] + vals
+
+
+def genel_arama(df, q):
+    q = str(q or "").strip()
+    if not q:
+        return df
+
+    cols = [
+        "parti_no", "ihale_no", "ihale_id", "urun_adi", "urun_turu", "agac_turu",
+        "oim", "obm", "cografi_bolge", "il", "sinif", "boy_kodu", "cap_kodu",
+    ]
+    mask = pd.Series(False, index=df.index)
+    for c in cols:
+        if c in df.columns:
+            mask = mask | df[c].astype(str).str.contains(q, case=False, na=False)
+    return df[mask]
+
+
+def filtrele(df):
+    st.sidebar.markdown(
+        """
+        <div class="side-card">
+            <div class="side-title">🔎 Filtreler</div>
+            <div class="side-sub">Önce bölge seç. Sonra il, OBM ve OİM kademeli açılır.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if st.sidebar.button("Filtreleri temizle", key="clear_filters"):
+        for k in list(st.session_state.keys()):
+            if k.startswith("filtre_"):
+                st.session_state.pop(k, None)
+        st.rerun()
+
+    q = st.sidebar.text_input("Genel arama", placeholder="Parti no, ihale no, Karaçam, tomruk...", key="filtre_ara")
+    sonuc = genel_arama(df, q)
+
+    bolge = st.sidebar.selectbox("Coğrafi Bölge", secenek(sonuc, "cografi_bolge"), key="filtre_bolge")
+    if bolge != "Tümü":
+        sonuc = sonuc[sonuc["cografi_bolge"] == bolge]
+
+        il = st.sidebar.selectbox("İl", secenek(sonuc, "il"), key="filtre_il")
+        if il != "Tümü":
+            sonuc = sonuc[sonuc["il"] == il]
+
+            obm = st.sidebar.selectbox("OBM", secenek(sonuc, "obm"), key="filtre_obm")
+            if obm != "Tümü":
+                sonuc = sonuc[sonuc["obm"] == obm]
+
+                oim = st.sidebar.selectbox("OİM", secenek(sonuc, "oim"), key="filtre_oim")
+                if oim != "Tümü":
+                    sonuc = sonuc[sonuc["oim"] == oim]
+    else:
+        st.sidebar.info("Detay filtreleri açmak için önce bölge seç.")
+
+    if bolge != "Tümü":
+        urun = st.sidebar.selectbox("Ürün Türü", secenek(sonuc, "urun_turu"), key="filtre_urun")
+        if urun != "Tümü":
+            sonuc = sonuc[sonuc["urun_turu"] == urun]
+
+        agac = st.sidebar.selectbox("Ağaç Türü", secenek(sonuc, "agac_turu"), key="filtre_agac")
+        if agac != "Tümü":
+            sonuc = sonuc[sonuc["agac_turu"] == agac]
+
+        sinif = st.sidebar.selectbox("Sınıf", secenek(sonuc, "sinif"), key="filtre_sinif")
+        if sinif != "Tümü":
+            sonuc = sonuc[sonuc["sinif"] == sinif]
+
+        boy = st.sidebar.selectbox("Boy Kodu", secenek(sonuc, "boy_kodu"), key="filtre_boy")
+        if boy != "Tümü":
+            sonuc = sonuc[sonuc["boy_kodu"] == boy]
+
+        cap = st.sidebar.selectbox("Çap Kodu", secenek(sonuc, "cap_kodu"), key="filtre_cap")
+        if cap != "Tümü":
+            sonuc = sonuc[sonuc["cap_kodu"] == cap]
+
+    if not sonuc.empty and sonuc["muhammen_birim_fiyat"].notna().any():
+        min_f = int(sonuc["muhammen_birim_fiyat"].min())
+        max_f = int(sonuc["muhammen_birim_fiyat"].max())
+        if min_f != max_f:
+            ar = st.sidebar.slider("Birim fiyat", min_f, max_f, (min_f, max_f), step=100, key="filtre_fiyat")
+            sonuc = sonuc[(sonuc["muhammen_birim_fiyat"] >= ar[0]) & (sonuc["muhammen_birim_fiyat"] <= ar[1])]
+
+    min_p, max_p = 0, 100
+    puan = st.sidebar.slider("Fırsat puanı", min_p, max_p, (min_p, max_p), step=1, key="filtre_puan")
+    sonuc = sonuc[(sonuc["firsat_puani"] >= puan[0]) & (sonuc["firsat_puani"] <= puan[1])]
+
+    sort = st.sidebar.selectbox(
+        "Sıralama",
+        ["Fırsat puanı yüksek", "En ucuz fiyat", "En yüksek miktar", "Parti no artan"],
+        key="filtre_sort",
+    )
+    if not sonuc.empty:
+        if sort == "Fırsat puanı yüksek":
+            sonuc = sonuc.sort_values(["firsat_puani", "muhammen_birim_fiyat"], ascending=[False, True])
+        elif sort == "En ucuz fiyat":
+            sonuc = sonuc.sort_values("muhammen_birim_fiyat", ascending=True)
+        elif sort == "En yüksek miktar":
+            sonuc = sonuc.sort_values("miktar_m3_hesap", ascending=False)
+        elif sort == "Parti no artan":
+            sonuc = sonuc.sort_values("parti_no", ascending=True)
+
+    return sonuc
+
+
+# =========================================================
+# SAYFA BILESENLERI
+# =========================================================
+
+def ozet_kartlari(df):
+    toplam = len(df)
+    ihale = df["ihale_no"].dropna().nunique() if "ihale_no" in df else 0
+    ort_fiyat = df["muhammen_birim_fiyat"].dropna().mean() if "muhammen_birim_fiyat" in df else 0
+    toplam_m3 = df["miktar_m3_hesap"].dropna().sum() if "miktar_m3_hesap" in df else 0
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Kayıt", f"{toplam:,}".replace(",", "."))
+    c2.metric("İhale", f"{ihale:,}".replace(",", "."))
+    c3.metric("Ort. fiyat", fmt_tl(ort_fiyat))
+    c4.metric("Toplam miktar", fmt_m3(toplam_m3))
+
+
+def firsat_panolar(df, limit=9):
     if df.empty:
         st.info("Kayıt yok.")
         return
 
     cols = st.columns(3)
-    for i, (urun, g) in enumerate(df.groupby("urun_turu", dropna=False)):
+    i = 0
+    for urun, g in df.groupby("urun_turu", dropna=False):
         if str(urun).strip() == "":
             continue
         en = g.sort_values(["firsat_puani", "muhammen_birim_fiyat"], ascending=[False, True]).head(1)
@@ -1077,12 +1096,16 @@ def firsat_panolar(df):
                 """,
                 unsafe_allow_html=True,
             )
+        i += 1
+        if i >= limit:
+            break
 
 
 def sonuc_karti(r):
     parti = int(r["parti_no"]) if pd.notna(r.get("parti_no")) else "-"
     ihale = int(r["ihale_no"]) if pd.notna(r.get("ihale_no")) else "-"
     link = str(r.get("kaynak_link", "") or "")
+
     st.markdown(
         f"""
         <div class="result-card {urun_class(r.get("urun_turu"))}">
@@ -1094,12 +1117,13 @@ def sonuc_karti(r):
             <div class="result-price">{fmt_tl(r.get("muhammen_birim_fiyat"))}</div>
             <div class="result-mini">
                 İhale: {h(ihale)} · OİM: {h(r.get("oim", ""))} · OBM: {h(r.get("obm", ""))}<br>
-                Miktar: {fmt_m3(r.get("miktar_m3_hesap"))} · Boy: {h(r.get("boy_kodu", ""))} · Çap: {h(r.get("cap_kodu", ""))}
+                Bölge: {h(r.get("cografi_bolge", ""))} · Miktar: {fmt_m3(r.get("miktar_m3_hesap"))} · Boy: {h(r.get("boy_kodu", ""))} · Çap: {h(r.get("cap_kodu", ""))}
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
     if link:
         st.link_button("Kaynak link", link)
 
@@ -1121,12 +1145,76 @@ def analiz_goster(df):
     if df.empty:
         st.info("Analiz için kayıt yok.")
         return
+
     c1, c2 = st.columns(2)
     with c1:
+        st.markdown('<div class="data-card"><div class="data-card-title">Ürün türüne göre ortalama fiyat</div></div>', unsafe_allow_html=True)
         st.bar_chart(df.groupby("urun_turu")["muhammen_birim_fiyat"].mean().dropna())
     with c2:
+        st.markdown('<div class="data-card"><div class="data-card-title">Bölgeye göre kayıt sayısı</div></div>', unsafe_allow_html=True)
         st.bar_chart(df.groupby("cografi_bolge")["parti_no"].count())
 
+    c3, c4 = st.columns(2)
+    with c3:
+        st.markdown('<div class="data-card"><div class="data-card-title">OİM bazında kayıt sayısı</div></div>', unsafe_allow_html=True)
+        st.bar_chart(df.groupby("oim")["parti_no"].count().sort_values(ascending=False).head(12))
+    with c4:
+        st.markdown('<div class="data-card"><div class="data-card-title">Ağaç türüne göre ortalama puan</div></div>', unsafe_allow_html=True)
+        st.bar_chart(df.groupby("agac_turu")["firsat_puani"].mean().dropna())
+
+
+def detay_paneli(df):
+    if df.empty:
+        return
+
+    st.subheader("Detaylı kayıt incele")
+    options = []
+    for idx, r in df.head(300).iterrows():
+        parti = int(r["parti_no"]) if pd.notna(r.get("parti_no")) else "-"
+        ihale = int(r["ihale_no"]) if pd.notna(r.get("ihale_no")) else "-"
+        options.append((idx, f"Parti {parti} · İhale {ihale} · {r.get('urun_adi', '')}"))
+
+    sec = st.selectbox("Detay aç", options, format_func=lambda x: x[1])
+    r = df.loc[sec[0]]
+
+    rows = [
+        ("İhale No", int(r["ihale_no"]) if pd.notna(r.get("ihale_no")) else "-"),
+        ("Parti No", int(r["parti_no"]) if pd.notna(r.get("parti_no")) else "-"),
+        ("Ürün", r.get("urun_adi", "")),
+        ("Ürün Türü", r.get("urun_turu", "")),
+        ("Ağaç Türü", r.get("agac_turu", "")),
+        ("Sınıf / Boy / Çap", f"{r.get('sinif', '')} / {r.get('boy_kodu', '')} / {r.get('cap_kodu', '')}"),
+        ("OİM / OBM", f"{r.get('oim', '')} / {r.get('obm', '')}"),
+        ("Bölge", r.get("cografi_bolge", "")),
+        ("Miktar", fmt_m3(r.get("miktar_m3_hesap"))),
+        ("Birim Fiyat", fmt_tl(r.get("muhammen_birim_fiyat"))),
+        ("Fırsat Puanı", r.get("firsat_puani", "")),
+    ]
+    html_rows = "".join(
+        f'<div class="detail-row"><div class="detail-key">{h(k)}</div><div class="detail-val">{h(v)}</div></div>'
+        for k, v in rows
+    )
+    st.markdown(f'<div class="detail-box">{html_rows}</div>', unsafe_allow_html=True)
+
+    link = str(r.get("kaynak_link", "") or "")
+    if link:
+        st.link_button("Kaynak link", link)
+
+
+def csv_yukleme_alani():
+    with st.expander("📁 CSV yükleme / veri değiştirme", expanded=False):
+        if not yetki_var("csv_yukleme"):
+            st.warning("Bu kullanıcı için CSV yükleme yetkisi kapalı.")
+            return None
+        uploaded = st.file_uploader("Farklı CSV yükle", type=["csv"], key="csv_upload")
+        if uploaded is not None:
+            st.success(f"Yüklenen CSV aktif: {uploaded.name}")
+        return uploaded
+
+
+# =========================================================
+# KULLANICI PANELI
+# =========================================================
 
 def kullanici_paneli():
     if st.session_state.get("giris_rol") != "admin":
@@ -1279,7 +1367,9 @@ def kullanici_paneli():
             st.error(msg)
 
 
-# ---------------- MAIN ----------------
+# =========================================================
+# ANA AKIS
+# =========================================================
 
 giris_zorunlu()
 
@@ -1310,29 +1400,36 @@ df = hazirla(raw)
 sonuc = filtrele(df)
 
 hero()
-
 st.caption(f"Okunan CSV: {aktif_csv}")
 
-if sayfa == "🏠 Özet":
+if sayfa == "🏠 Ana Sayfa":
     section("Genel Özet", "Öne çıkan metrikler, son güncelleme bilgisi ve fırsat kartları.")
     ozet_kartlari(sonuc)
     st.divider()
-    firsat_panolar(sonuc)
 
-elif sayfa == "🔎 Sonuçlar":
-    section("Sonuçlar", "Filtrelenen kayıtları kart, tablo veya analiz görünümünde incele.")
+    c1, c2 = st.columns([1.15, .85])
+    with c1:
+        st.subheader("Öne çıkan fırsatlar")
+        firsat_panolar(sonuc, limit=6)
+    with c2:
+        st.subheader("Hızlı detay")
+        detay_paneli(sonuc)
+
+elif sayfa == "🔎 İhaleler":
+    section("İhaleler", "Filtrelenen kayıtları kart, tablo veya detay görünümünde incele.")
     ozet_kartlari(sonuc)
     st.divider()
-    tab1, tab2, tab3 = st.tabs(["Kartlar", "Tablo", "Analiz"])
+
+    tab1, tab2, tab3 = st.tabs(["Kartlar", "Tablo", "Detay"])
     with tab1:
         if sonuc.empty:
             st.info("Sonuç yok.")
-        for _, r in sonuc.head(30).iterrows():
+        for _, r in sonuc.head(40).iterrows():
             sonuc_karti(r)
     with tab2:
         tablo_goster(sonuc)
     with tab3:
-        analiz_goster(sonuc)
+        detay_paneli(sonuc)
 
     if yetki_var("rapor_indirme"):
         st.download_button(
@@ -1344,18 +1441,58 @@ elif sayfa == "🔎 Sonuçlar":
     else:
         st.warning("Bu kullanıcı için rapor indirme yetkisi kapalı.")
 
-elif sayfa == "⭐ Fırsat Panosu":
-    section("Fırsat Panosu", "Ürün türlerine göre öne çıkan kayıtlar.")
-    firsat_panolar(sonuc)
+elif sayfa == "⭐ Fırsatlar":
+    section("Fırsatlar", "Ürün türlerine göre en güçlü kayıtlar ve hızlı fırsat görünümü.")
+    ozet_kartlari(sonuc)
+    st.divider()
+    firsat_panolar(sonuc, limit=12)
+
+elif sayfa == "📊 Analiz":
+    section("Analiz", "Ürün, bölge, OİM ve ağaç türlerine göre görsel özet.")
+    analiz_goster(sonuc)
 
 elif sayfa == "🆕 Yeni Kayıtlar":
     section("Yeni Kayıtlar", "Son gelen kayıtları ve güncel fırsatları incele.")
     yeni = sonuc.copy()
     if "kayit_tarihi" in yeni.columns:
         yeni = yeni.sort_values("kayit_tarihi", ascending=False)
-    for _, r in yeni.head(30).iterrows():
+    for _, r in yeni.head(40).iterrows():
         sonuc_karti(r)
+
+elif sayfa == "📘 Kılavuz":
+    section("Kılavuz", "Depo Radarı ekranlarını hızlıca kullanmak için kısa açıklamalar.")
+    a, b, c = st.columns(3)
+    with a:
+        st.markdown(
+            """
+            <div class="help-card">
+                <h3>🔎 Filtreleme</h3>
+                <p>Önce bölge seçilir. Sonra il, OBM ve OİM alanları kademeli açılır. Arama kutusuna parti no veya ihale no yazabilirsin.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with b:
+        st.markdown(
+            """
+            <div class="help-card">
+                <h3>⭐ Fırsat Puanı</h3>
+                <p>Puan aynı ürün/ağaç grubu içinde fiyat, miktar ve kalite işaretlerine göre karşılaştırma amaçlı hesaplanır.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c:
+        st.markdown(
+            """
+            <div class="help-card">
+                <h3>👥 Kullanıcılar</h3>
+                <p>Admin kullanıcı panelinden giriş, CSV yükleme, analiz ve rapor indirme yetkilerini kullanıcı bazında yönetebilir.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 st.divider()
 csv_yukleme_alani()
-st.caption("Depo Radarı bağımsız analiz prototipidir. Fırsat puanı karşılaştırma amaçlıdır.")
+st.caption("Depo Radarı bağımsız analiz prototipidir. Fırsat puanı karşılaştırma amaçlıdır; kesin alım tavsiyesi değildir.")
