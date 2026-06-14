@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v38",
+    page_title="Depo Radarı v39",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -510,7 +510,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Türkiye geneli ihale, parti, fiyat ve fırsat takip ekranı.</p>
-        <p class="small-note">v38: giriş sistemi + takip kaldırıldı + kademeli filtreler.</p>
+        <p class="small-note">v39: takip kaldırıldı, sade menü, kayıt olma, admin paneli ve CSV yükleme en altta.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -677,18 +677,26 @@ def sifre_hash_uret(metin: str) -> str:
 
 
 def varsayilan_kullanici_dosyasi_olustur():
+    """
+    İlk kurulumda admin kullanıcısını oluşturur.
+    Varsayılan: admin / admin123
+    """
     if os.path.isfile(KULLANICI_DOSYASI):
         return
+
     varsayilan = {
         "kullanicilar": [
             {
                 "kullanici_adi": "admin",
                 "sifre_hash": sifre_hash_uret("admin123"),
                 "ad": "Yönetici",
+                "rol": "admin",
                 "aktif": True,
+                "kayit_tarihi": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
         ]
     }
+
     try:
         with open(KULLANICI_DOSYASI, "w", encoding="utf-8") as f:
             json.dump(varsayilan, f, ensure_ascii=False, indent=2)
@@ -696,37 +704,115 @@ def varsayilan_kullanici_dosyasi_olustur():
         pass
 
 
-def kullanicilari_yukle() -> dict:
+def kullanici_dosyasi_kaydet(veri: dict):
+    with open(KULLANICI_DOSYASI, "w", encoding="utf-8") as f:
+        json.dump(veri, f, ensure_ascii=False, indent=2)
+
+
+def kullanici_verisi_yukle() -> dict:
     varsayilan_kullanici_dosyasi_olustur()
+
     try:
         with open(KULLANICI_DOSYASI, "r", encoding="utf-8") as f:
             veri = json.load(f)
     except Exception:
         veri = {"kullanicilar": []}
 
+    if "kullanicilar" not in veri or not isinstance(veri["kullanicilar"], list):
+        veri["kullanicilar"] = []
+
+    # Eski kullanıcı dosyalarında rol yoksa tamamla.
+    degisti = False
+    for item in veri["kullanicilar"]:
+        if "rol" not in item:
+            item["rol"] = "admin" if str(item.get("kullanici_adi", "")).lower() == "admin" else "user"
+            degisti = True
+        if "aktif" not in item:
+            item["aktif"] = True
+            degisti = True
+
+    if degisti:
+        try:
+            kullanici_dosyasi_kaydet(veri)
+        except Exception:
+            pass
+
+    return veri
+
+
+def kullanicilari_yukle() -> dict:
+    veri = kullanici_verisi_yukle()
     sonuc = {}
+
     for item in veri.get("kullanicilar", []):
         kullanici_adi = str(item.get("kullanici_adi", "") or "").strip()
+
         if not kullanici_adi:
             continue
+
         sonuc[kullanici_adi.lower()] = item
+
     return sonuc
 
 
 def kullanici_dogrula(kullanici_adi: str, sifre: str):
     kayitlar = kullanicilari_yukle()
     kayit = kayitlar.get(str(kullanici_adi or "").strip().lower())
+
     if not kayit:
-        return None
+        return None, "Kullanıcı bulunamadı."
+
     if not bool(kayit.get("aktif", True)):
-        return None
+        return None, "Hesap henüz aktif değil. Yönetici onayı gerekiyor."
+
     if str(kayit.get("sifre_hash", "")) != sifre_hash_uret(sifre):
-        return None
-    return kayit
+        return None, "Şifre yanlış."
+
+    return kayit, ""
+
+
+def kullanici_kayit_ol(kullanici_adi: str, ad: str, sifre: str, sifre_tekrar: str):
+    kullanici_adi = str(kullanici_adi or "").strip()
+    ad = str(ad or "").strip()
+
+    if len(kullanici_adi) < 3:
+        return False, "Kullanıcı adı en az 3 karakter olmalı."
+
+    if len(sifre) < 6:
+        return False, "Şifre en az 6 karakter olmalı."
+
+    if sifre != sifre_tekrar:
+        return False, "Şifreler eşleşmiyor."
+
+    veri = kullanici_verisi_yukle()
+    mevcutlar = {
+        str(item.get("kullanici_adi", "") or "").strip().lower()
+        for item in veri.get("kullanicilar", [])
+    }
+
+    if kullanici_adi.lower() in mevcutlar:
+        return False, "Bu kullanıcı adı zaten var."
+
+    veri["kullanicilar"].append(
+        {
+            "kullanici_adi": kullanici_adi,
+            "sifre_hash": sifre_hash_uret(sifre),
+            "ad": ad or kullanici_adi,
+            "rol": "user",
+            "aktif": False,
+            "kayit_tarihi": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+    )
+
+    try:
+        kullanici_dosyasi_kaydet(veri)
+        return True, "Kayıt alındı. Yönetici onayından sonra giriş yapabilirsin."
+    except Exception as e:
+        return False, f"Kayıt kaydedilemedi: {e}"
 
 
 def giris_zorunlu():
-    if st.session_state.get("giris_ok_v38"):
+    if st.session_state.get("giris_ok_v39"):
         return
 
     st.markdown(
@@ -740,60 +826,199 @@ def giris_zorunlu():
         unsafe_allow_html=True,
     )
 
-    sol, orta, sag = st.columns([1, 1.2, 1])
+    sol, orta, sag = st.columns([1, 1.25, 1])
+
     with orta:
-        st.markdown('<div class="result-card">', unsafe_allow_html=True)
-        with st.form("giris_formu_v38"):
-            kullanici_adi = st.text_input("Kullanıcı adı", key="login_user_v38")
-            sifre = st.text_input("Şifre", type="password", key="login_pass_v38")
-            giris = st.form_submit_button("Giriş yap", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-        if giris:
-            kayit = kullanici_dogrula(kullanici_adi, sifre)
-            if kayit:
-                st.session_state["giris_ok_v38"] = True
-                st.session_state["giris_kullanici_v38"] = str(kayit.get("ad") or kayit.get("kullanici_adi") or kullanici_adi)
-                st.success("Giriş başarılı. Yönlendiriliyorsun...")
-                st.rerun()
-            else:
-                st.error("Kullanıcı adı veya şifre yanlış.")
+        sekme_giris, sekme_kayit = st.tabs(["Giriş yap", "Kayıt ol"])
+
+        with sekme_giris:
+            st.markdown('<div class="result-card">', unsafe_allow_html=True)
+            with st.form("giris_formu_v39"):
+                kullanici_adi = st.text_input("Kullanıcı adı", key="login_user_v39")
+                sifre = st.text_input("Şifre", type="password", key="login_pass_v39")
+                giris = st.form_submit_button("Giriş yap", use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            if giris:
+                kayit, mesaj = kullanici_dogrula(kullanici_adi, sifre)
+
+                if kayit:
+                    st.session_state["giris_ok_v39"] = True
+                    st.session_state["giris_kullanici_v39"] = str(kayit.get("ad") or kayit.get("kullanici_adi") or kullanici_adi)
+                    st.session_state["giris_rol_v39"] = str(kayit.get("rol", "user"))
+                    st.success("Giriş başarılı. Yönlendiriliyorsun...")
+                    st.rerun()
+                else:
+                    st.error(mesaj or "Kullanıcı adı veya şifre yanlış.")
+
+        with sekme_kayit:
+            st.markdown('<div class="result-card">', unsafe_allow_html=True)
+            with st.form("kayit_formu_v39"):
+                yeni_ad = st.text_input("Ad / firma adı", key="register_name_v39")
+                yeni_kullanici = st.text_input("Kullanıcı adı", key="register_user_v39")
+                yeni_sifre = st.text_input("Şifre", type="password", key="register_pass_v39")
+                yeni_sifre_tekrar = st.text_input("Şifre tekrar", type="password", key="register_pass2_v39")
+                kayit_buton = st.form_submit_button("Kayıt ol", use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            if kayit_buton:
+                ok, mesaj = kullanici_kayit_ol(yeni_kullanici, yeni_ad, yeni_sifre, yeni_sifre_tekrar)
+                if ok:
+                    st.success(mesaj)
+                else:
+                    st.error(mesaj)
 
     st.stop()
 
 
 def kullanici_oturum_karti():
-    ad = st.session_state.get("giris_kullanici_v38", "Kullanıcı")
+    ad = st.session_state.get("giris_kullanici_v39", "Kullanıcı")
+    rol = st.session_state.get("giris_rol_v39", "user")
+
     st.sidebar.markdown("### 👤 Oturum")
-    st.sidebar.success(f"Giriş yapıldı: {ad}")
-    if st.sidebar.button("Çıkış yap", key="logout_v38", use_container_width=True):
-        for key in ["giris_ok_v38", "giris_kullanici_v38"]:
+    st.sidebar.success(f"{ad}")
+
+    if rol == "admin":
+        st.sidebar.caption("Yetki: Yönetici")
+
+    if st.sidebar.button("Çıkış yap", key="logout_v39", use_container_width=True):
+        for key in ["giris_ok_v39", "giris_kullanici_v39", "giris_rol_v39"]:
             st.session_state.pop(key, None)
         st.rerun()
 
 
+def admin_paneli():
+    if st.session_state.get("giris_rol_v39") != "admin":
+        st.warning("Bu alan sadece yönetici için açık.")
+        return
+
+    bolum_basligi("🛠️ Yönetici Paneli", "Kullanıcıları onayla, pasifleştir, sil veya yeni kullanıcı ekle.")
+
+    veri = kullanici_verisi_yukle()
+    kullanicilar = veri.get("kullanicilar", [])
+
+    st.subheader("Kullanıcılar")
+
+    if not kullanicilar:
+        st.info("Kullanıcı bulunamadı.")
+    else:
+        tablo_veri = []
+        for item in kullanicilar:
+            tablo_veri.append(
+                {
+                    "Kullanıcı adı": item.get("kullanici_adi", ""),
+                    "Ad": item.get("ad", ""),
+                    "Rol": item.get("rol", "user"),
+                    "Aktif": "Evet" if item.get("aktif", False) else "Hayır",
+                    "Kayıt": item.get("kayit_tarihi", ""),
+                }
+            )
+
+        st.dataframe(pd.DataFrame(tablo_veri), use_container_width=True, hide_index=True)
+
+    st.divider()
+
+    st.subheader("Kullanıcı işlemleri")
+
+    aktif_kullanici = st.session_state.get("giris_kullanici_v39", "")
+
+    for i, item in enumerate(list(kullanicilar)):
+        kullanici_adi = str(item.get("kullanici_adi", "") or "")
+        rol = str(item.get("rol", "user") or "user")
+        aktif = bool(item.get("aktif", False))
+
+        with st.expander(f"{kullanici_adi} — {'Aktif' if aktif else 'Onay bekliyor / pasif'}", expanded=False):
+            c1, c2, c3, c4 = st.columns(4)
+
+            with c1:
+                if st.button("Aktif yap", key=f"user_active_v39_{i}"):
+                    veri["kullanicilar"][i]["aktif"] = True
+                    kullanici_dosyasi_kaydet(veri)
+                    st.success("Kullanıcı aktif edildi.")
+                    st.rerun()
+
+            with c2:
+                if st.button("Pasif yap", key=f"user_passive_v39_{i}"):
+                    if kullanici_adi.lower() == "admin":
+                        st.warning("Ana admin pasifleştirilemez.")
+                    else:
+                        veri["kullanicilar"][i]["aktif"] = False
+                        kullanici_dosyasi_kaydet(veri)
+                        st.success("Kullanıcı pasif edildi.")
+                        st.rerun()
+
+            with c3:
+                yeni_rol = "user" if rol == "admin" else "admin"
+                if st.button(f"Rol: {yeni_rol}", key=f"user_role_v39_{i}"):
+                    if kullanici_adi.lower() == "admin":
+                        st.warning("Ana admin rolü değiştirilemez.")
+                    else:
+                        veri["kullanicilar"][i]["rol"] = yeni_rol
+                        kullanici_dosyasi_kaydet(veri)
+                        st.success("Rol değiştirildi.")
+                        st.rerun()
+
+            with c4:
+                if st.button("Sil", key=f"user_delete_v39_{i}"):
+                    if kullanici_adi.lower() == "admin":
+                        st.warning("Ana admin silinemez.")
+                    else:
+                        veri["kullanicilar"].pop(i)
+                        kullanici_dosyasi_kaydet(veri)
+                        st.success("Kullanıcı silindi.")
+                        st.rerun()
+
+            with st.form(f"sifre_sifirla_form_v39_{i}"):
+                yeni_sifre = st.text_input("Yeni şifre", type="password", key=f"reset_pass_v39_{i}")
+                kaydet = st.form_submit_button("Şifreyi güncelle")
+                if kaydet:
+                    if len(yeni_sifre) < 6:
+                        st.error("Şifre en az 6 karakter olmalı.")
+                    else:
+                        veri["kullanicilar"][i]["sifre_hash"] = sifre_hash_uret(yeni_sifre)
+                        kullanici_dosyasi_kaydet(veri)
+                        st.success("Şifre güncellendi.")
+                        st.rerun()
+
+    st.divider()
+
+    st.subheader("Yeni kullanıcı ekle")
+
+    with st.form("admin_user_add_v39"):
+        ad = st.text_input("Ad / firma adı")
+        kullanici_adi = st.text_input("Kullanıcı adı")
+        sifre = st.text_input("Şifre", type="password")
+        rol = st.selectbox("Rol", ["user", "admin"])
+        aktif = st.checkbox("Aktif", value=True)
+        ekle = st.form_submit_button("Kullanıcı ekle", use_container_width=True)
+
+    if ekle:
+        ok, mesaj = kullanici_kayit_ol(kullanici_adi, ad, sifre, sifre)
+        if ok:
+            veri = kullanici_verisi_yukle()
+            for item in veri["kullanicilar"]:
+                if str(item.get("kullanici_adi", "")).lower() == kullanici_adi.lower():
+                    item["rol"] = rol
+                    item["aktif"] = aktif
+            kullanici_dosyasi_kaydet(veri)
+            st.success("Kullanıcı eklendi.")
+            st.rerun()
+        else:
+            st.error(mesaj)
+
+
 def lisans_kontrolu():
-    """
-    V33:
-    Şimdilik premium kilidi açık.
-    Kod girme zorunluluğu kaldırıldı.
-    """
-    st.sidebar.markdown("### 🔑 Lisans")
-    st.sidebar.success("Premium açık")
-    st.sidebar.caption("Kod girmeden CSV yükleme, analiz ve rapor indirme aktif.")
+    # V39: premium kilidi açık ama sidebar'da lisans/paket kartı gösterilmez.
     return "Premium"
 
 
 def premium_aktif(paket):
-    """
-    V33:
-    Premium özellikler geçici olarak herkese açık.
-    """
     return True
 
 
 def paket_bilgi_goster(paket):
-    st.sidebar.success("Paket: Premium açık")
-    st.sidebar.caption("V33: Kilitler geçici olarak kaldırıldı.")
+    # V39: paket/premium bilgisi ekranda gösterilmez.
+    return
 
 
 def kilitli_ozellik(baslik, aciklama):
@@ -2152,55 +2377,38 @@ def sol_menu_oku() -> str:
         "🆕 Yeni Kayıtlar",
     ]
 
-    if "aktif_sayfa_v38" not in st.session_state:
-        st.session_state["aktif_sayfa_v38"] = "🏠 Özet"
+    if st.session_state.get("giris_rol_v39") == "admin":
+        secenekler.append("🛠️ Yönetim")
 
-    if st.session_state.get("hedef_sayfa_v38") in secenekler:
-        st.session_state["aktif_sayfa_v38"] = st.session_state.get("hedef_sayfa_v38")
+    if "aktif_sayfa_v39" not in st.session_state:
+        st.session_state["aktif_sayfa_v39"] = "🏠 Özet"
 
-    st.sidebar.markdown(
-        """
-        <div class="menu-title-box">
-            <div class="head">✨ Hızlı Menü</div>
-            <div class="sub">Modern kısa yol menüsü. Filtre uygulayınca sistem seni otomatik olarak Sonuçlar ekranına taşır.</div>
-        </div>
-        <div class="menu-group-note">Bölümler</div>
-        """,
-        unsafe_allow_html=True,
-    )
+    if st.session_state.get("hedef_sayfa_v39") in secenekler:
+        st.session_state["aktif_sayfa_v39"] = st.session_state.get("hedef_sayfa_v39")
+
+    st.sidebar.markdown("### Menü")
 
     for i, secim in enumerate(secenekler):
-        aktif = st.session_state.get("aktif_sayfa_v38") == secim
+        aktif = st.session_state.get("aktif_sayfa_v39") == secim
         etiket = secim if not aktif else f"✅ {secim}"
         if st.sidebar.button(
             etiket,
-            key=f"menu_btn_v38_{i}",
+            key=f"menu_btn_v39_{i}",
             use_container_width=True,
             type="primary" if aktif else "secondary",
         ):
-            st.session_state["aktif_sayfa_v38"] = secim
-            st.session_state.pop("hedef_sayfa_v38", None)
+            st.session_state["aktif_sayfa_v39"] = secim
+            st.session_state.pop("hedef_sayfa_v39", None)
             st.rerun()
 
-    return st.session_state.get("aktif_sayfa_v38", "🏠 Özet")
+    return st.session_state.get("aktif_sayfa_v39", "🏠 Özet")
+
 
 def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
     st.sidebar.header("Filtreler")
     st.sidebar.caption("Önce bölge seçilir. Sonra İl → OBM → OİM seçenekleri sırayla açılır.")
 
-    uploaded = None
-
-    if premium_aktif(paket or {}):
-        uploaded = st.sidebar.file_uploader("Farklı CSV yükle", type=["csv"])
-
-        if uploaded is not None:
-            st.sidebar.success(f"Yüklenen CSV kullanılıyor: {uploaded.name}")
-            df = hazirla(upload_oku(uploaded))
-        else:
-            st.sidebar.success(f"Okunan CSV: {st.session_state.get('okunan_csv', '-')}")
-    else:
-        st.sidebar.success(f"Okunan CSV: {st.session_state.get('okunan_csv', '-')}")
-        st.sidebar.warning("CSV yükleme aktif.")
+    st.sidebar.success(f"Okunan CSV: {st.session_state.get('okunan_csv', '-')}")
 
     def secenek_kademeli(temp_df: pd.DataFrame, kolon: str):
         return secenek(temp_df, kolon)
@@ -2215,7 +2423,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
             if st.session_state.get(anahtar) != "Tümü":
                 st.session_state[anahtar] = "Tümü"
 
-    arama = st.sidebar.text_input("Genel arama", placeholder="Parti no, ihale no, Karaçam, tomruk...", key="arama_v38")
+    arama = st.sidebar.text_input("Genel arama", placeholder="Parti no, ihale no, Karaçam, tomruk...", key="arama_v39")
 
     filtre_aktif = False
     if str(arama or "").strip():
@@ -2227,46 +2435,46 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
     bolge = st.sidebar.selectbox(
         "Coğrafi Bölge",
         secenek_kademeli(sonuc, "cografi_bolge"),
-        key="bolge_v38"
+        key="bolge_v39"
     )
     sonuc = uygula_esitlik(sonuc, "cografi_bolge", bolge)
     if bolge != "Tümü":
         filtre_aktif = True
     else:
-        key_sifirla("il_v38", "obm_v38", "oim_v38", "urun_v38", "agac_v38", "sinif_v38", "boy_v38", "cap_v38")
+        key_sifirla("il_v39", "obm_v39", "oim_v39", "urun_v39", "agac_v39", "sinif_v39", "boy_v39", "cap_v39")
 
     il = "Tümü"
     if bolge != "Tümü":
         il = st.sidebar.selectbox(
             "İl",
             secenek_kademeli(sonuc, "il"),
-            key="il_v38"
+            key="il_v39"
         )
         sonuc = uygula_esitlik(sonuc, "il", il)
         if il != "Tümü":
             filtre_aktif = True
         else:
-            key_sifirla("obm_v38", "oim_v38")
+            key_sifirla("obm_v39", "oim_v39")
 
     obm = "Tümü"
     if bolge != "Tümü" and il != "Tümü":
         obm = st.sidebar.selectbox(
             "OBM",
             secenek_kademeli(sonuc, "obm"),
-            key="obm_v38"
+            key="obm_v39"
         )
         sonuc = uygula_esitlik(sonuc, "obm", obm)
         if obm != "Tümü":
             filtre_aktif = True
         else:
-            key_sifirla("oim_v38")
+            key_sifirla("oim_v39")
 
     oim = "Tümü"
     if bolge != "Tümü" and il != "Tümü" and obm != "Tümü":
         oim = st.sidebar.selectbox(
             "OİM",
             secenek_kademeli(sonuc, "oim"),
-            key="oim_v38"
+            key="oim_v39"
         )
         sonuc = uygula_esitlik(sonuc, "oim", oim)
         if oim != "Tümü":
@@ -2278,7 +2486,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         urun = st.sidebar.selectbox(
             "Ürün Türü",
             secenek_kademeli(sonuc, "urun_turu"),
-            key="urun_v38"
+            key="urun_v39"
         )
         sonuc = uygula_esitlik(sonuc, "urun_turu", urun)
         if urun != "Tümü":
@@ -2287,7 +2495,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         agac = st.sidebar.selectbox(
             "Ağaç Türü",
             secenek_kademeli(sonuc, "agac_turu"),
-            key="agac_v38"
+            key="agac_v39"
         )
         sonuc = uygula_esitlik(sonuc, "agac_turu", agac)
         if agac != "Tümü":
@@ -2296,7 +2504,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         sinif = st.sidebar.selectbox(
             "Sınıf",
             secenek_kademeli(sonuc, "sinif"),
-            key="sinif_v38"
+            key="sinif_v39"
         )
         sonuc = uygula_esitlik(sonuc, "sinif", sinif)
         if sinif != "Tümü":
@@ -2305,7 +2513,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         boy = st.sidebar.selectbox(
             "Boy Kodu",
             secenek_kademeli(sonuc, "boy_kodu"),
-            key="boy_v38"
+            key="boy_v39"
         )
         sonuc = uygula_esitlik(sonuc, "boy_kodu", boy)
         if boy != "Tümü":
@@ -2314,7 +2522,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         cap = st.sidebar.selectbox(
             "Çap Kodu",
             secenek_kademeli(sonuc, "cap_kodu"),
-            key="cap_v38"
+            key="cap_v39"
         )
         sonuc = uygula_esitlik(sonuc, "cap_kodu", cap)
         if cap != "Tümü":
@@ -2333,7 +2541,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
                 max_value=max_f,
                 value=(min_f, max_f),
                 step=100,
-                key="fiyat_v38"
+                key="fiyat_v39"
             )
             if fiyat != (min_f, max_f):
                 filtre_aktif = True
@@ -2355,7 +2563,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
                 max_value=max_m,
                 value=(min_m, max_m),
                 step=1.0,
-                key="miktar_v38"
+                key="miktar_v39"
             )
             if miktar != (min_m, max_m):
                 filtre_aktif = True
@@ -2377,7 +2585,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
                 max_value=max_puan,
                 value=(min_puan, max_puan),
                 step=1,
-                key="puan_v38"
+                key="puan_v39"
             )
             if puan_araligi != (min_puan, max_puan):
                 filtre_aktif = True
@@ -2386,7 +2594,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
                 (sonuc["firsat_puani"] <= puan_araligi[1])
             ]
 
-    sadece_supheli = st.sidebar.checkbox("Sadece şüpheli fiyatları göster", key="supheli_v38")
+    sadece_supheli = st.sidebar.checkbox("Sadece şüpheli fiyatları göster", key="supheli_v39")
     if sadece_supheli:
         filtre_aktif = True
         sonuc = sonuc[sonuc["supheli_fiyat"] == True]
@@ -2401,11 +2609,11 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
             "En düşük miktar",
             "Parti no artan",
         ],
-        key="siralama_v38"
+        key="siralama_v39"
     )
 
     if filtre_aktif:
-        st.session_state["hedef_sayfa_v38"] = "🔎 Sonuçlar"
+        st.session_state["hedef_sayfa_v39"] = "🔎 Sonuçlar"
 
     if sonuc.empty:
         return sonuc
@@ -2845,15 +3053,38 @@ def analiz(df: pd.DataFrame):
     st.dataframe(pivot, use_container_width=True, hide_index=True)
 
 
+def alt_csv_yukleme_alani():
+    with st.expander("📁 CSV yükleme / veri değiştirme", expanded=False):
+        st.caption("CSV yüklemek istersen buradan yükle. Yükleme sonrası sayfa otomatik yenilenir ve yüklenen CSV kullanılır.")
+        uploaded = st.file_uploader(
+            "Farklı CSV yükle",
+            type=["csv"],
+            key="alt_csv_yukle_v39"
+        )
+
+        if uploaded is not None:
+            st.success(f"Yüklenen CSV aktif: {uploaded.name}")
+
+        if uploaded is not None and st.button("Yüklenen CSV'yi bırak, sunucudaki CSV'ye dön", key="csv_reset_v39"):
+            st.session_state.pop("alt_csv_yukle_v39", None)
+            st.rerun()
+
+
 okunacak_csv = en_guncel_csv_bul()
 st.session_state["okunan_csv"] = okunacak_csv
 
-df_raw = csv_oku(okunacak_csv, csv_cache_anahtari(okunacak_csv))
+uploaded_csv = st.session_state.get("alt_csv_yukle_v39")
+
+if uploaded_csv is not None:
+    df_raw = upload_oku(uploaded_csv)
+    st.session_state["okunan_csv"] = f"Yüklenen CSV: {getattr(uploaded_csv, 'name', 'CSV')}"
+else:
+    df_raw = csv_oku(okunacak_csv, csv_cache_anahtari(okunacak_csv))
 
 if df_raw.empty:
     st.error(
         f"CSV bulunamadı: {okunacak_csv}\n\n"
-        "CSV dosyasını bu uygulamayla aynı klasöre koy veya soldan CSV yükle."
+        "CSV dosyasını bu uygulamayla aynı klasöre koy veya en alttaki CSV yükleme alanından CSV yükle."
     )
     st.stop()
 
@@ -2864,30 +3095,12 @@ kullanici_oturum_karti()
 menu_secimi = sol_menu_oku()
 
 df = hazirla(df_raw)
-takip_hedefini_uygula()
 sonuc = filtrele(df, paket)
 
-if st.session_state.get("hedef_sayfa_v38"):
-    menu_secimi = st.session_state.get("hedef_sayfa_v38")
-    st.session_state["aktif_sayfa_v38"] = menu_secimi
-    st.session_state.pop("hedef_sayfa_v38", None)
-
-st.caption(f"Okunan dosya: **{okunacak_csv}** — Arama kutusunda parti no, ihale no, ürün, il, OİM ve OBM yazabilirsin.")
-
-mevcut_csvler = sunucudaki_csvleri_listele()
-st.sidebar.caption("Sunucudaki CSV: " + (", ".join(mevcut_csvler[:5]) if mevcut_csvler else "CSV yok"))
-
-try:
-    _harita_sayisi = len(oim_konum_haritasi_oku(oim_harita_cache_key()))
-    st.sidebar.caption(f"OİM konum haritası: {_harita_sayisi} kayıt")
-except Exception:
-    pass
-
-if okunacak_csv != "depo_radari_turkiye_tum_ihaleler.csv":
-    st.warning(
-        "Türkiye CSV dosyası sunucuda bulunamadığı için eski CSV okunuyor. "
-        "GitHub ana dizine depo_radari_turkiye_tum_ihaleler.csv dosyasını yükle ve commit et."
-    )
+if st.session_state.get("hedef_sayfa_v39"):
+    menu_secimi = st.session_state.get("hedef_sayfa_v39")
+    st.session_state["aktif_sayfa_v39"] = menu_secimi
+    st.session_state.pop("hedef_sayfa_v39", None)
 
 paket_bilgi_goster(paket)
 
@@ -2961,5 +3174,10 @@ elif menu_secimi == "🆕 Yeni Kayıtlar":
     bolum_basligi("🆕 Yeni Kayıtlar", "Son veri güncellemesinde gelen kayıtlar ve onların fırsat özeti.")
     yeni_kayitlar_panosu(sonuc)
 
+elif menu_secimi == "🛠️ Yönetim":
+    admin_paneli()
+
+st.divider()
+alt_csv_yukleme_alani()
 st.divider()
 st.caption("Depo Radarı bağımsız bir analiz prototipidir. Fırsat puanı tahmini karşılaştırma amaçlıdır, kesin alım tavsiyesi değildir.")
