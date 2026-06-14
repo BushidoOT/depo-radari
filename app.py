@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v31",
+    page_title="Depo Radarı v32",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -16,7 +16,7 @@ st.set_page_config(
 CSV_DOSYA = "depo_radari_temiz_v6.csv"
 CSV_ONCELIKLI_DOSYALAR = [
     "depo_radari_turkiye_tum_ihaleler.csv",
-        "depo_radari_tum_ihaleler_guvenli_v3.csv",
+    "depo_radari_tum_ihaleler_guvenli_v3.csv",
     "depo_radari_tum_ihaleler_guvenli_v2.csv",
     "depo_radari_tum_ihaleler_guvenli.csv",
     "depo_radari_temiz_v6.csv",
@@ -349,109 +349,87 @@ st.markdown(
     }
 
 
-    .hero {
+    .main {
         background:
-            radial-gradient(circle at top left, rgba(46, 204, 113, .26), transparent 34%),
-            radial-gradient(circle at top right, rgba(52, 152, 219, .20), transparent 32%),
-            linear-gradient(135deg, rgba(12, 35, 28, .88), rgba(8, 12, 18, .84));
-        border: 1px solid rgba(46, 204, 113, .28);
-        box-shadow: 0 18px 50px rgba(0,0,0,.22);
+            radial-gradient(circle at top left, rgba(46,204,113,.12), transparent 34%),
+            radial-gradient(circle at top right, rgba(52,152,219,.10), transparent 32%);
+    }
+    .hero {
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 16px 42px rgba(0,0,0,.18);
+    }
+    .hero:after {
+        content: "";
+        position: absolute;
+        width: 220px;
+        height: 220px;
+        right: -70px;
+        top: -80px;
+        background: radial-gradient(circle, rgba(46,204,113,.28), transparent 62%);
+        border-radius: 999px;
     }
     .hero-title {
-        letter-spacing: -1px;
-    }
-    .glass-panel {
-        border: 1px solid rgba(150,150,150,.18);
-        border-radius: 20px;
-        padding: 16px 18px;
-        background: linear-gradient(135deg, rgba(255,255,255,.055), rgba(255,255,255,.025));
-        box-shadow: 0 12px 34px rgba(0,0,0,.13);
-        margin-bottom: 14px;
+        letter-spacing: -0.8px;
     }
     .section-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        margin: 8px 0 12px 0;
+        border: 1px solid rgba(150,150,150,.20);
+        border-radius: 18px;
+        padding: 15px 17px;
+        margin: 10px 0 14px 0;
+        background: linear-gradient(135deg, rgba(255,255,255,.055), rgba(255,255,255,.020));
+        box-shadow: 0 10px 25px rgba(0,0,0,.08);
     }
-    .section-title {
+    .section-head-title {
         font-size: 22px;
         font-weight: 950;
-        letter-spacing: -.3px;
+        margin-bottom: 4px;
     }
-    .section-sub {
+    .section-head-sub {
         font-size: 13px;
-        opacity: .72;
-        line-height: 1.35;
+        opacity: .78;
+        line-height: 1.45;
     }
-    .summary-card {
-        border: 1px solid rgba(150,150,150,.18);
+    .metric-shell {
+        border: 1px solid rgba(150,150,150,.20);
         border-radius: 18px;
-        padding: 15px 16px;
-        min-height: 104px;
-        background:
-            linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
-        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+        padding: 14px 15px;
+        background: linear-gradient(135deg, rgba(255,255,255,.050), rgba(255,255,255,.018));
+        min-height: 92px;
         margin-bottom: 10px;
     }
-    .summary-icon {
-        font-size: 21px;
-        margin-bottom: 7px;
-    }
-    .summary-label {
+    .quick-chip {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 6px 11px;
+        margin: 3px 5px 6px 0;
         font-size: 12px;
-        opacity: .70;
-        margin-bottom: 4px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: .4px;
+        font-weight: 850;
+        border: 1px solid rgba(150,150,150,.28);
+        background: rgba(255,255,255,.045);
     }
-    .summary-value {
-        font-size: 23px;
-        font-weight: 950;
-        line-height: 1.1;
-    }
-    .result-card {
-        box-shadow: 0 10px 28px rgba(0,0,0,.12);
-        background:
-            linear-gradient(135deg, rgba(46,204,113,.07), rgba(255,255,255,.025));
-    }
-    .result-card:hover {
-        border-color: rgba(46,204,113,.45);
-        transform: translateY(-1px);
-        transition: .16s ease;
-    }
-    .load-box {
-        border: 1px dashed rgba(46,204,113,.45);
-        border-radius: 16px;
-        padding: 12px 14px;
-        background: rgba(46,204,113,.07);
-        margin: 8px 0 14px 0;
-    }
-    .load-text {
-        font-size: 13px;
-        opacity: .80;
-        margin-bottom: 8px;
-    }
-    .side-hint {
-        border: 1px solid rgba(150,150,150,.18);
+    .menu-help {
+        border: 1px solid rgba(52, 152, 219, .35);
         border-radius: 14px;
         padding: 10px 12px;
-        background: rgba(255,255,255,.035);
-        font-size: 13px;
+        background: rgba(52, 152, 219, .08);
+        font-size: 12.5px;
         line-height: 1.45;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
     }
-    .panel-badge {
-        display: inline-block;
-        border: 1px solid rgba(52,152,219,.44);
-        background: rgba(52,152,219,.12);
+    div[data-testid="stSidebar"] {
+        border-right: 1px solid rgba(150,150,150,.16);
+    }
+    div[data-testid="stSidebar"] .stRadio > div {
+        gap: 6px;
+    }
+    .stButton > button {
         border-radius: 999px;
-        padding: 5px 10px;
-        font-size: 12px;
-        font-weight: 900;
-        margin-bottom: 8px;
+        font-weight: 850;
+    }
+    .stDownloadButton > button {
+        border-radius: 999px;
+        font-weight: 850;
     }
 
     div[data-testid="stMetricValue"] {
@@ -466,15 +444,12 @@ st.markdown(
     """
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
-        <p class="hero-sub">Tomruk, maden direği, kağıtlık odun ve diğer emvaller için filtreli ihale takip ekranı.</p>
-        <p class="small-note">Türkiye geneli veri için sayfalı gösterim, sol menü panel yönetimi ve daha modern arayüz. v31</p>
+        <p class="hero-sub">Türkiye geneli ihale, parti, fiyat ve fırsat takip ekranı.</p>
+        <p class="small-note">v32: CSV seçimi düzeltildi; Türkiye CSV öncelikli, dosya değişince cache yenilenir.</p>
     </div>
     """,
     unsafe_allow_html=True
 )
-
-
-
 
 LISANS_DOSYASI = "depo_radari_lisanslar.txt"
 TAKIP_DOSYASI = "depo_radari_takip_listesi.json"
@@ -1061,7 +1036,7 @@ def yeni_kayitlar_panosu(df: pd.DataFrame):
             },
         )
 
-def alarm_merkezi_panosu(df: pd.DataFrame, expanded: bool = False):
+def alarm_merkezi_panosu(df: pd.DataFrame):
     liste = takip_listesi_oku()
 
     if not liste:
@@ -1101,7 +1076,7 @@ def alarm_merkezi_panosu(df: pd.DataFrame, expanded: bool = False):
             "sart": alarm_ozet_metni(sartlar),
         })
 
-    with st.expander("🚨 Alarm merkezi", expanded=(expanded or bool(alarm_parcalari))):
+    with st.expander("🚨 Alarm merkezi", expanded=bool(alarm_parcalari)):
         if not alarm_parcalari:
             st.info("Şu anda alarm şartına uyan kayıt yok.")
             st.caption("Takip listesine fiyat, fırsat puanı veya miktar şartı ekleyince burada otomatik görünecek.")
@@ -1181,8 +1156,8 @@ def alarm_merkezi_panosu(df: pd.DataFrame, expanded: bool = False):
             },
         )
 
-def takip_listesi_panosu(df: pd.DataFrame, expanded: bool = False):
-    with st.expander("📌 Takip listesi", expanded=expanded):
+def takip_listesi_panosu(df: pd.DataFrame):
+    with st.expander("📌 Takip listesi ve alarm şartları", expanded=False):
         st.caption("Mevcut filtreyi kaydedebilir, alarm şartı ekleyebilir ve aynı takip koduyla kendi listen üzerinden geri dönebilirsin.")
 
         if st.session_state.get("takip_uygulandi_v22", False):
@@ -1456,8 +1431,35 @@ def en_guncel_csv_bul():
     return adaylar[0]
 
 
+def sunucudaki_csvleri_listele():
+    desenler = [
+        "depo_radari_turkiye_tum_ihaleler.csv",
+        "depo_radari_tum_ihaleler*.csv",
+        "depo_radari_temiz*.csv",
+        "depo_radari*.csv",
+    ]
+
+    dosyalar = []
+
+    for desen in desenler:
+        for dosya in glob.glob(desen):
+            if os.path.isfile(dosya) and dosya not in dosyalar:
+                dosyalar.append(dosya)
+
+    dosyalar.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+    return dosyalar
+
+
+def csv_cache_anahtari(path: str):
+    try:
+        return os.path.getmtime(path), os.path.getsize(path)
+    except Exception:
+        return 0, 0
+
+
 @st.cache_data(show_spinner=False)
-def csv_oku(path: str) -> pd.DataFrame:
+def csv_oku(path: str, cache_key=None) -> pd.DataFrame:
+    # cache_key dosya tarihi/boyutu değişince Streamlit cache'i yenilesin diye var.
     if not os.path.exists(path):
         return pd.DataFrame()
     return pd.read_csv(path)
@@ -1800,87 +1802,6 @@ def sayi(value):
 
 
 
-
-def sol_panel_menusu_sec() -> str:
-    """
-    Sol açılır menüden ana panel seçimi.
-    Takip listesi ve alarm merkezi ana sonuçlardan ayrıldı.
-    """
-    if "aktif_panel_v31" not in st.session_state:
-        st.session_state["aktif_panel_v31"] = "Sonuçlar"
-
-    with st.sidebar.expander("🧭 Panel menüsü", expanded=True):
-        st.markdown(
-            """
-            <div class="side-hint">
-                Büyük Türkiye verisinde sonuçlar sayfa sayfa gösterilir.
-                Takip ve alarm ayrı panellerden yönetilir.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        if st.button("🏠 Sonuçlar", use_container_width=True, key="panel_sonuclar_v31"):
-            st.session_state["aktif_panel_v31"] = "Sonuçlar"
-            st.rerun()
-
-        if st.button("📌 Takip Listesi", use_container_width=True, key="panel_takip_v31"):
-            st.session_state["aktif_panel_v31"] = "Takip Listesi"
-            st.rerun()
-
-        if st.button("🚨 Alarm Merkezi", use_container_width=True, key="panel_alarm_v31"):
-            st.session_state["aktif_panel_v31"] = "Alarm Merkezi"
-            st.rerun()
-
-        aktif = st.session_state.get("aktif_panel_v31", "Sonuçlar")
-        st.markdown(f'<span class="panel-badge">Aktif: {aktif}</span>', unsafe_allow_html=True)
-
-    return st.session_state.get("aktif_panel_v31", "Sonuçlar")
-
-
-def gosterim_limiti_al(key: str, toplam: int, baslangic: int = 10) -> int:
-    if key not in st.session_state:
-        st.session_state[key] = baslangic
-
-    try:
-        st.session_state[key] = int(st.session_state[key])
-    except Exception:
-        st.session_state[key] = baslangic
-
-    if st.session_state[key] < baslangic:
-        st.session_state[key] = baslangic
-
-    return min(st.session_state[key], int(toplam))
-
-
-def daha_fazla_yukle_kontrolu(key: str, toplam: int, artis: int = 10, baslangic: int = 10):
-    mevcut = gosterim_limiti_al(key, toplam, baslangic)
-
-    st.markdown(
-        f"""
-        <div class="load-box">
-            <div class="load-text"><b>{toplam}</b> kayıttan <b>{mevcut}</b> kayıt gösteriliyor.</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    if toplam <= mevcut:
-        st.success("Tüm kayıtlar gösteriliyor.")
-        return
-
-    c1, c2 = st.columns([1, 1])
-
-    with c1:
-        if st.button(f"➕ Daha fazla yükle (+{artis})", key=f"{key}_more_btn", use_container_width=True):
-            st.session_state[key] = min(toplam, mevcut + artis)
-            st.rerun()
-
-    with c2:
-        if st.button("↩️ İlk 10 kayda dön", key=f"{key}_reset_btn", use_container_width=True):
-            st.session_state[key] = baslangic
-            st.rerun()
-
 def genel_arama_uygula(df: pd.DataFrame, arama: str) -> pd.DataFrame:
     """
     Sidebar arama kutusu artık sadece ürün adında değil;
@@ -1916,6 +1837,44 @@ def genel_arama_uygula(df: pd.DataFrame, arama: str) -> pd.DataFrame:
                 mask = mask | (df[kolon].astype(str).str.strip() == q)
 
     return df[mask]
+
+def bolum_basligi(baslik: str, aciklama: str = ""):
+    st.markdown(
+        f"""
+        <div class="section-head">
+            <div class="section-head-title">{baslik}</div>
+            <div class="section-head-sub">{aciklama}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def sol_menu_oku() -> str:
+    st.sidebar.markdown("### 🧭 Menü")
+    secim = st.sidebar.radio(
+        "Gitmek istediğin bölüm",
+        [
+            "🏠 Özet",
+            "🔎 Sonuçlar",
+            "⭐ Fırsat Panosu",
+            "📌 Takip Listesi",
+            "🚨 Alarm Merkezi",
+            "🆕 Yeni Kayıtlar",
+        ],
+        key="sol_menu_v31",
+    )
+
+    st.sidebar.markdown(
+        """
+        <div class="menu-help">
+            Sol menüden bölümler ayrıldı. Filtreler yine aşağıda çalışır; seçtiğin bölüm sadece o ekranı gösterir.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    return secim
 
 def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
     st.sidebar.header("Filtreler")
@@ -2138,29 +2097,13 @@ def ozet(df: pd.DataFrame):
     supheli = int(df["supheli_fiyat"].sum()) if adet else 0
     en_yuksek_puan = df["firsat_puani"].max() if adet and "firsat_puani" in df.columns else None
 
-    kartlar_ozet = [
-        ("📦", "Kayıt", sayi(adet)),
-        ("💸", "En ucuz", tl(en_ucuz)),
-        ("📊", "Ortalama", tl(ort)),
-        ("🪵", "Toplam miktar", m3(toplam_miktar)),
-        ("⭐", "En yüksek puan", sayi(en_yuksek_puan)),
-        ("⚠️", "Şüpheli fiyat", sayi(supheli)),
-    ]
-
-    cols = st.columns(6)
-
-    for col, (ikon, baslik, deger) in zip(cols, kartlar_ozet):
-        with col:
-            st.markdown(
-                f"""
-                <div class="summary-card">
-                    <div class="summary-icon">{ikon}</div>
-                    <div class="summary-label">{baslik}</div>
-                    <div class="summary-value">{deger}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1.metric("Kayıt", sayi(adet))
+    c2.metric("En ucuz", tl(en_ucuz))
+    c3.metric("Ortalama", tl(ort))
+    c4.metric("Toplam miktar", m3(toplam_miktar))
+    c5.metric("En yüksek puan", sayi(en_yuksek_puan))
+    c6.metric("Şüpheli fiyat", sayi(supheli))
 
 
 def ozet_kutu(baslik, row):
@@ -2378,24 +2321,37 @@ def kartlar(df: pd.DataFrame):
         return
 
     toplam = len(df)
-    adet = gosterim_limiti_al("kart_limit_v31", toplam, baslangic=10)
+    filtre_imza = hashlib.md5(pd.util.hash_pandas_object(df[["ihale_id", "parti_no"]] if {"ihale_id", "parti_no"}.issubset(df.columns) else df.head(1), index=True).values.tobytes()).hexdigest()
 
-    st.markdown(
-        """
-        <div class="section-head">
-            <div>
-                <div class="section-title">Kart görünümü</div>
-                <div class="section-sub">Türkiye geneli veri büyük olduğu için ilk 10 kayıt gösterilir. Daha fazla yükle ile 10'ar kayıt eklenir.</div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    if st.session_state.get("kart_filtre_imza_v31") != filtre_imza:
+        st.session_state["kart_filtre_imza_v31"] = filtre_imza
+        st.session_state["kart_goster_adet_v31"] = 10
+
+    adet = int(st.session_state.get("kart_goster_adet_v31", 10))
+    adet = max(10, min(adet, toplam))
+
+    st.caption(f"{toplam} sonuçtan {adet} tanesi gösteriliyor.")
 
     for _, row in df.head(adet).iterrows():
         kart(row)
 
-    daha_fazla_yukle_kontrolu("kart_limit_v31", toplam, artis=10, baslangic=10)
+    if adet < toplam:
+        c1, c2, c3 = st.columns([1, 1, 2])
+
+        with c1:
+            if st.button("➕ 10 kayıt daha yükle", key="daha_fazla_10_v31"):
+                st.session_state["kart_goster_adet_v31"] = min(adet + 10, toplam)
+                st.rerun()
+
+        with c2:
+            if st.button("⬇️ 50 kayıt göster", key="daha_fazla_50_v31"):
+                st.session_state["kart_goster_adet_v31"] = min(adet + 50, toplam)
+                st.rerun()
+
+        with c3:
+            st.caption("Türkiye geneli veri büyük olduğu için kartlar parça parça yüklenir.")
+    else:
+        st.success("Tüm sonuçlar gösterildi.")
 
 
 def tablo(df: pd.DataFrame):
@@ -2443,24 +2399,8 @@ def tablo(df: pd.DataFrame):
         if kolon in gorunen.columns:
             gorunen[kolon] = gorunen[kolon].apply(lambda x: temiz_metin(x))
 
-    toplam = len(gorunen)
-    adet = gosterim_limiti_al("tablo_limit_v31", toplam, baslangic=10)
-    gorunen_sayfali = gorunen.head(adet)
-
-    st.markdown(
-        """
-        <div class="section-head">
-            <div>
-                <div class="section-title">Tablo görünümü</div>
-                <div class="section-sub">Tablo ilk 10 kayıtla açılır. Daha fazla yükle ile 10'ar kayıt eklenir.</div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     st.dataframe(
-        gorunen_sayfali,
+        gorunen,
         use_container_width=True,
         hide_index=True,
         column_config={
@@ -2490,8 +2430,6 @@ def tablo(df: pd.DataFrame):
             "kaynak_link": st.column_config.LinkColumn("Kaynakta Aç"),
         },
     )
-
-    daha_fazla_yukle_kontrolu("tablo_limit_v31", toplam, artis=10, baslangic=10)
 
 
 def analiz(df: pd.DataFrame):
@@ -2546,7 +2484,7 @@ def analiz(df: pd.DataFrame):
 okunacak_csv = en_guncel_csv_bul()
 st.session_state["okunan_csv"] = okunacak_csv
 
-df_raw = csv_oku(okunacak_csv)
+df_raw = csv_oku(okunacak_csv, csv_cache_anahtari(okunacak_csv))
 
 if df_raw.empty:
     st.error(
@@ -2558,76 +2496,102 @@ if df_raw.empty:
 paket = lisans_kontrolu()
 
 takip_kullanici_kodu_al()
-aktif_panel = sol_panel_menusu_sec()
+menu_secimi = sol_menu_oku()
 
 df = hazirla(df_raw)
 takip_hedefini_uygula()
 sonuc = filtrele(df, paket)
 
-st.caption(f"Okunan dosya: **{okunacak_csv}** — Filtreler kademeli çalışır; seçilen bölgeye göre diğer seçenekler daralır.")
+st.caption(f"Okunan dosya: **{okunacak_csv}** — Arama kutusunda parti no, ihale no, ürün, OİM ve OBM yazabilirsin.")
+
+mevcut_csvler = sunucudaki_csvleri_listele()
+st.sidebar.caption("Sunucudaki CSV: " + (", ".join(mevcut_csvler[:5]) if mevcut_csvler else "CSV yok"))
+
+if okunacak_csv != "depo_radari_turkiye_tum_ihaleler.csv":
+    st.warning(
+        "Türkiye CSV dosyası sunucuda bulunamadığı için eski CSV okunuyor. "
+        "GitHub ana dizine depo_radari_turkiye_tum_ihaleler.csv dosyasını yükle ve commit et."
+    )
 
 paket_bilgi_goster(paket)
 
-firsat_puani_bilgi_kutusu()
-
-guncelleme_ozeti_goster()
-
-ozet(sonuc)
-
-st.divider()
-
-with st.expander("⭐ Öne çıkanları göster / gizle", expanded=False):
+if menu_secimi == "🏠 Özet":
+    bolum_basligi("🏠 Genel Özet", "Filtrelenen kayıtların kısa durumu, son güncelleme bilgisi ve hızlı fırsat kartları.")
+    guncelleme_ozeti_goster()
+    ozet(sonuc)
+    st.markdown(
+        """
+        <span class="quick-chip">🌲 Tomruk sarı</span>
+        <span class="quick-chip">🔵 Maden direği mavi</span>
+        <span class="quick-chip">🔴 Kağıtlık kırmızı</span>
+        <span class="quick-chip">📌 Takip ayrı ekran</span>
+        <span class="quick-chip">🚨 Alarm ayrı ekran</span>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.divider()
     one_cikanlar(sonuc)
-
-with st.expander("🌲 Ürün bazlı fırsat panosunu göster / gizle", expanded=False):
+    st.divider()
     urun_bazli_firsat_panosu(sonuc)
 
-yeni_kayitlar_panosu(sonuc)
+elif menu_secimi == "🔎 Sonuçlar":
+    bolum_basligi("🔎 Sonuçlar", "Filtrelenen kayıtları kart, tablo veya analiz olarak incele. Kart görünümünde 10 kayıt daha yükleme vardır.")
+    ozet(sonuc)
+    st.divider()
 
-st.divider()
+    g1, g2 = st.columns([1, 1])
+    with g1:
+        gorunum = st.radio("Görünüm", ["Kartlar", "Tablo", "Analiz"], horizontal=True, key="gorunum_v31")
+    with g2:
+        st.write("")
 
-if aktif_panel == "Takip Listesi":
-    st.markdown('<div class="section-title">📌 Takip Listesi</div><div class="section-sub">Kaydedilen filtreler ve alarm şartları burada yönetilir.</div>', unsafe_allow_html=True)
-    takip_listesi_panosu(df, expanded=True)
-    st.stop()
+    if gorunum == "Kartlar":
+        kartlar(sonuc)
+    elif gorunum == "Tablo":
+        tablo(sonuc)
+    else:
+        if premium_aktif(paket):
+            analiz(sonuc)
+        else:
+            kilitli_ozellik(
+                "Analiz görünümü",
+                "Analiz görünümü premium lisansa ayrıldı. Kartlar, Tablo, Öne çıkanlar ve Ürün bazlı fırsat panosu ücretsiz açık kalır."
+            )
 
-if aktif_panel == "Alarm Merkezi":
-    st.markdown('<div class="section-title">🚨 Alarm Merkezi</div><div class="section-sub">Takip listendeki alarm şartlarına uyan kayıtlar burada ayrı görünür.</div>', unsafe_allow_html=True)
-    alarm_merkezi_panosu(df, expanded=True)
-    st.stop()
+    st.divider()
 
-g1, g2 = st.columns([1, 1])
-with g1:
-    gorunum = st.radio("Görünüm", ["Kartlar", "Tablo", "Analiz"], horizontal=True, key="gorunum_v31")
-with g2:
-    st.write("")
-
-if gorunum == "Kartlar":
-    kartlar(sonuc)
-elif gorunum == "Tablo":
-    tablo(sonuc)
-else:
     if premium_aktif(paket):
-        analiz(sonuc)
+        st.download_button(
+            "Filtrelenen sonuçları CSV indir",
+            data=sonuc.to_csv(index=False, encoding="utf-8-sig"),
+            file_name="depo_radari_filtreli_sonuclar.csv",
+            mime="text/csv",
+        )
     else:
         kilitli_ozellik(
-            "Analiz görünümü",
-            "Analiz görünümü premium lisansa ayrıldı. Kartlar, Tablo, Öne çıkanlar ve Ürün bazlı fırsat panosu ücretsiz açık kalır."
+            "Rapor indirme",
+            "CSV/Excel raporu indirme premium lisansa ayrıldı. Ücretsiz kullanımda sonuçlar ekranda görüntülenir."
         )
 
+elif menu_secimi == "⭐ Fırsat Panosu":
+    bolum_basligi("⭐ Fırsat Panosu", "Ürün türlerine göre öne çıkan ucuz ve yüksek puanlı kayıtlar.")
+    ozet(sonuc)
+    st.divider()
+    one_cikanlar(sonuc)
+    st.divider()
+    urun_bazli_firsat_panosu(sonuc)
+
+elif menu_secimi == "📌 Takip Listesi":
+    bolum_basligi("📌 Takip Listesi", "Mevcut filtreyi kaydet, kayıtlı takiplerine geri dön ve alarm şartlarını yönet.")
+    takip_listesi_panosu(df)
+
+elif menu_secimi == "🚨 Alarm Merkezi":
+    bolum_basligi("🚨 Alarm Merkezi", "Takip listesinde belirlediğin fiyat, miktar ve fırsat puanı şartlarına uyan kayıtlar.")
+    alarm_merkezi_panosu(df)
+
+elif menu_secimi == "🆕 Yeni Kayıtlar":
+    bolum_basligi("🆕 Yeni Kayıtlar", "Son veri güncellemesinde gelen kayıtlar ve onların fırsat özeti.")
+    yeni_kayitlar_panosu(sonuc)
+
 st.divider()
-
-if premium_aktif(paket):
-    st.download_button(
-        "Filtrelenen sonuçları CSV indir",
-        data=sonuc.to_csv(index=False, encoding="utf-8-sig"),
-        file_name="depo_radari_filtreli_sonuclar.csv",
-        mime="text/csv",
-    )
-else:
-    kilitli_ozellik(
-        "Rapor indirme",
-        "CSV/Excel raporu indirme premium lisansa ayrıldı. Ücretsiz kullanımda sonuçlar ekranda görüntülenir."
-    )
-
 st.caption("Depo Radarı bağımsız bir analiz prototipidir. Fırsat puanı tahmini karşılaştırma amaçlıdır, kesin alım tavsiyesi değildir.")
