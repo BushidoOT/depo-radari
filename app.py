@@ -706,60 +706,6 @@ def query_param_ayarla(**kwargs):
         pass
 
 
-
-VARSAYILAN_YETKILER = {
-    "siteye_giris": True,
-    "csv_yukleme": True,
-    "analiz": True,
-    "rapor_indirme": True,
-    "kullanici_yonetimi": False,
-}
-
-
-def yetkileri_normalize_et(kayit: dict) -> dict:
-    yetkiler = dict(VARSAYILAN_YETKILER)
-
-    if isinstance(kayit.get("yetkiler"), dict):
-        for key, value in kayit.get("yetkiler", {}).items():
-            if key in yetkiler:
-                yetkiler[key] = bool(value)
-
-    if str(kayit.get("rol", "user")) == "admin":
-        for key in yetkiler:
-            yetkiler[key] = True
-
-    return yetkiler
-
-
-def aktif_kullanici_kaydi():
-    kullanici_adi = str(st.session_state.get("giris_kullanici_adi", "") or "").strip().lower()
-
-    if not kullanici_adi:
-        return None
-
-    return kullanicilari_yukle().get(kullanici_adi)
-
-
-def yetki_var(yetki_adi: str) -> bool:
-    kayit = aktif_kullanici_kaydi()
-
-    if not kayit:
-        return False
-
-    yetkiler = yetkileri_normalize_et(kayit)
-    return bool(yetkiler.get(yetki_adi, False))
-
-
-def admin_panel_linki_goster():
-    if st.session_state.get("giris_rol") != "admin":
-        return
-
-    st.sidebar.markdown("### Yönetici")
-    if st.sidebar.button("👥 Kullanıcı panelini aç", key="admin_link_btn", use_container_width=True):
-        query_param_ayarla(admin="1")
-        st.rerun()
-
-
 def varsayilan_kullanici_dosyasi_olustur():
     """
     İlk kurulumda yönetici kullanıcısını oluşturur.
@@ -776,7 +722,6 @@ def varsayilan_kullanici_dosyasi_olustur():
                 "ad": "Yönetici",
                 "rol": "admin",
                 "aktif": True,
-                "yetkiler": {**VARSAYILAN_YETKILER, "kullanici_yonetimi": True},
                 "kayit_tarihi": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
         ]
@@ -819,11 +764,6 @@ def kullanici_verisi_yukle() -> dict:
             # Artık yönetici onayı gerekmiyor; eski bekleyenleri de aktif yap.
             item["aktif"] = True
             degisti = True
-        if "yetkiler" not in item or not isinstance(item.get("yetkiler"), dict):
-            item["yetkiler"] = {**VARSAYILAN_YETKILER}
-            if str(item.get("rol", "user")) == "admin":
-                item["yetkiler"]["kullanici_yonetimi"] = True
-            degisti = True
 
     if degisti:
         try:
@@ -862,9 +802,6 @@ def kullanici_dogrula(kullanici_adi: str, sifre: str):
     if str(kayit.get("sifre_hash", "")) != sifre_hash_uret(sifre):
         return None, "Şifre yanlış."
 
-    if not yetkileri_normalize_et(kayit).get("siteye_giris", False):
-        return None, "Bu kullanıcının siteye giriş yetkisi kapalı."
-
     return kayit, ""
 
 
@@ -898,7 +835,6 @@ def kullanici_kayit_ol(kullanici_adi: str, ad: str, sifre: str, sifre_tekrar: st
             "ad": ad or kullanici_adi,
             "rol": "user",
             "aktif": True,
-            "yetkiler": dict(VARSAYILAN_YETKILER),
             "kayit_tarihi": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
     )
@@ -1031,73 +967,38 @@ def kullanicilar_paneli():
         st.warning("Bu alan sadece yönetici için açık.")
         return
 
-    bolum_basligi("👥 Kullanıcı Paneli", "Kullanıcı detayları, giriş durumu, roller ve yetkiler.")
-
-    if st.button("Siteye dön", key="admin_siteye_don", use_container_width=False):
-        query_param_ayarla(admin=None)
-        st.rerun()
+    bolum_basligi("👥 Kullanıcılar", "Kayıt olan kullanıcıları gör, aktif/pasif yap, rol değiştir veya şifre güncelle.")
 
     veri = kullanici_verisi_yukle()
     kullanicilar = veri.get("kullanicilar", [])
 
-    toplam = len(kullanicilar)
-    aktif_sayi = sum(1 for k in kullanicilar if k.get("aktif", False))
-    admin_sayi = sum(1 for k in kullanicilar if str(k.get("rol", "user")) == "admin")
+    if not kullanicilar:
+        st.info("Kullanıcı bulunamadı.")
+        return
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Toplam kullanıcı", toplam)
-    c2.metric("Aktif kullanıcı", aktif_sayi)
-    c3.metric("Yönetici", admin_sayi)
-
-    st.divider()
-
-    detay_satirlari = []
+    tablo_veri = []
     for item in kullanicilar:
-        yetkiler = yetkileri_normalize_et(item)
-        detay_satirlari.append(
+        tablo_veri.append(
             {
                 "Kullanıcı adı": item.get("kullanici_adi", ""),
-                "Ad / Firma": item.get("ad", ""),
+                "Ad": item.get("ad", ""),
                 "Rol": item.get("rol", "user"),
                 "Aktif": "Evet" if item.get("aktif", False) else "Hayır",
-                "Siteye giriş": "Evet" if yetkiler.get("siteye_giris") else "Hayır",
-                "CSV yükleme": "Evet" if yetkiler.get("csv_yukleme") else "Hayır",
-                "Analiz": "Evet" if yetkiler.get("analiz") else "Hayır",
-                "Rapor": "Evet" if yetkiler.get("rapor_indirme") else "Hayır",
-                "Kullanıcı yönetimi": "Evet" if yetkiler.get("kullanici_yonetimi") else "Hayır",
-                "Kayıt tarihi": item.get("kayit_tarihi", ""),
+                "Kayıt": item.get("kayit_tarihi", ""),
             }
         )
 
-    st.subheader("Kullanıcı listesi")
-    if detay_satirlari:
-        st.dataframe(pd.DataFrame(detay_satirlari), use_container_width=True, hide_index=True)
-    else:
-        st.info("Kullanıcı bulunamadı.")
+    st.dataframe(pd.DataFrame(tablo_veri), use_container_width=True, hide_index=True)
 
     st.divider()
-    st.subheader("Kullanıcı detayları ve yetkiler")
+    st.subheader("Kullanıcı işlemleri")
 
     for i, item in enumerate(list(kullanicilar)):
         kullanici_adi = str(item.get("kullanici_adi", "") or "")
         rol = str(item.get("rol", "user") or "user")
         aktif = bool(item.get("aktif", False))
-        yetkiler = yetkileri_normalize_et(item)
 
-        with st.expander(f"{kullanici_adi} — {item.get('ad', '')} — {rol} — {'Aktif' if aktif else 'Pasif'}", expanded=False):
-            st.markdown("#### Detaylar")
-            detay = {
-                "kullanici_adi": item.get("kullanici_adi", ""),
-                "ad": item.get("ad", ""),
-                "rol": item.get("rol", "user"),
-                "aktif": item.get("aktif", False),
-                "kayit_tarihi": item.get("kayit_tarihi", ""),
-                "sifre_hash": item.get("sifre_hash", ""),
-                "yetkiler": yetkiler,
-            }
-            st.json(detay)
-
-            st.markdown("#### Hesap durumu")
+        with st.expander(f"{kullanici_adi} — {'Aktif' if aktif else 'Pasif'}", expanded=False):
             c1, c2, c3, c4 = st.columns(4)
 
             with c1:
@@ -1124,8 +1025,6 @@ def kullanicilar_paneli():
                         st.warning("Ana yönetici rolü değiştirilemez.")
                     else:
                         veri["kullanicilar"][i]["rol"] = yeni_rol
-                        if yeni_rol == "admin":
-                            veri["kullanicilar"][i]["yetkiler"] = {**VARSAYILAN_YETKILER, "kullanici_yonetimi": True}
                         kullanici_dosyasi_kaydet(veri)
                         st.success("Rol değiştirildi.")
                         st.rerun()
@@ -1140,35 +1039,6 @@ def kullanicilar_paneli():
                         st.success("Kullanıcı silindi.")
                         st.rerun()
 
-            st.markdown("#### Yetkiler")
-            y1, y2, y3 = st.columns(3)
-            with y1:
-                siteye_giris = st.checkbox("Siteye giriş", value=yetkiler.get("siteye_giris", True), key=f"perm_site_{i}")
-                csv_yukleme = st.checkbox("CSV yükleme", value=yetkiler.get("csv_yukleme", True), key=f"perm_csv_{i}")
-            with y2:
-                analiz = st.checkbox("Analiz görünümü", value=yetkiler.get("analiz", True), key=f"perm_analiz_{i}")
-                rapor = st.checkbox("Rapor indirme", value=yetkiler.get("rapor_indirme", True), key=f"perm_rapor_{i}")
-            with y3:
-                kullanici_yonetimi = st.checkbox("Kullanıcı yönetimi", value=yetkiler.get("kullanici_yonetimi", False), key=f"perm_user_{i}")
-
-            if st.button("Yetkileri kaydet", key=f"perm_save_{i}"):
-                if kullanici_adi.lower() == "admin":
-                    veri["kullanicilar"][i]["yetkiler"] = {**VARSAYILAN_YETKILER, "kullanici_yonetimi": True}
-                    veri["kullanicilar"][i]["rol"] = "admin"
-                    veri["kullanicilar"][i]["aktif"] = True
-                else:
-                    veri["kullanicilar"][i]["yetkiler"] = {
-                        "siteye_giris": siteye_giris,
-                        "csv_yukleme": csv_yukleme,
-                        "analiz": analiz,
-                        "rapor_indirme": rapor,
-                        "kullanici_yonetimi": kullanici_yonetimi,
-                    }
-                kullanici_dosyasi_kaydet(veri)
-                st.success("Yetkiler kaydedildi.")
-                st.rerun()
-
-            st.markdown("#### Şifre")
             with st.form(f"sifre_sifirla_form_{i}"):
                 yeni_sifre = st.text_input("Yeni şifre", type="password", key=f"reset_pass_{i}")
                 kaydet = st.form_submit_button("Şifreyi güncelle")
@@ -1200,8 +1070,6 @@ def kullanicilar_paneli():
                 if str(item.get("kullanici_adi", "")).lower() == kullanici_adi.lower():
                     item["rol"] = rol
                     item["aktif"] = aktif
-                    if rol == "admin":
-                        item["yetkiler"] = {**VARSAYILAN_YETKILER, "kullanici_yonetimi": True}
             kullanici_dosyasi_kaydet(veri)
             st.success("Kullanıcı eklendi.")
             st.rerun()
@@ -1209,14 +1077,8 @@ def kullanicilar_paneli():
             st.error(mesaj)
 
 
-def admin_paneli():
-    # Eski çağrılar hata vermesin diye alias.
-    kullanicilar_paneli()
-
-
-
 def lisans_kontrolu():
-    #  premium kilidi açık ama sidebar'da lisans/paket kartı gösterilmez.
+    # V39: premium kilidi açık ama sidebar'da lisans/paket kartı gösterilmez.
     return "Premium"
 
 
@@ -1225,7 +1087,7 @@ def premium_aktif(paket):
 
 
 def paket_bilgi_goster(paket):
-    #  paket/premium bilgisi ekranda gösterilmez.
+    # V39: paket/premium bilgisi ekranda gösterilmez.
     return
 
 
@@ -2585,7 +2447,8 @@ def sol_menu_oku() -> str:
         "🆕 Yeni Kayıtlar",
     ]
 
-
+    if st.session_state.get("giris_rol") == "admin":
+        secenekler.append("👥 Kullanıcılar")
 
     if "aktif_sayfa" not in st.session_state:
         st.session_state["aktif_sayfa"] = "🏠 Özet"
@@ -3262,40 +3125,25 @@ def analiz(df: pd.DataFrame):
 
 def alt_csv_yukleme_alani():
     with st.expander("📁 CSV yükleme / veri değiştirme", expanded=False):
-        if not yetki_var("csv_yukleme"):
-            st.warning("Bu kullanıcı için CSV yükleme yetkisi kapalı.")
-            return
-
         st.caption("CSV yüklemek istersen buradan yükle. Yükleme sonrası sayfa otomatik yenilenir ve yüklenen CSV kullanılır.")
         uploaded = st.file_uploader(
             "Farklı CSV yükle",
             type=["csv"],
-            key="alt_csv_yukle"
+            key="alt_csv_yukle_v39"
         )
 
         if uploaded is not None:
             st.success(f"Yüklenen CSV aktif: {uploaded.name}")
 
-        if uploaded is not None and st.button("Yüklenen CSV'yi bırak, sunucudaki CSV'ye dön", key="csv_reset"):
-            st.session_state.pop("alt_csv_yukle", None)
+        if uploaded is not None and st.button("Yüklenen CSV'yi bırak, sunucudaki CSV'ye dön", key="csv_reset_v39"):
+            st.session_state.pop("alt_csv_yukle_v39", None)
             st.rerun()
 
-
-paket = lisans_kontrolu()
-
-giris_zorunlu()
-kullanici_oturum_karti()
-admin_panel_linki_goster()
-
-# Kullanıcı paneli ayrı ekrandır; CSV okumadan açılır.
-if query_param_getir("admin") == "1":
-    kullanicilar_paneli()
-    st.stop()
 
 okunacak_csv = en_guncel_csv_bul()
 st.session_state["okunan_csv"] = okunacak_csv
 
-uploaded_csv = st.session_state.get("alt_csv_yukle")
+uploaded_csv = st.session_state.get("alt_csv_yukle_v39")
 
 if uploaded_csv is not None:
     df_raw = upload_oku(uploaded_csv)
@@ -3310,6 +3158,10 @@ if df_raw.empty:
     )
     st.stop()
 
+paket = lisans_kontrolu()
+
+giris_zorunlu()
+kullanici_oturum_karti()
 menu_secimi = sol_menu_oku()
 
 df = hazirla(df_raw)
@@ -3357,14 +3209,17 @@ elif menu_secimi == "🔎 Sonuçlar":
     elif gorunum == "Tablo":
         tablo(sonuc)
     else:
-        if yetki_var("analiz"):
+        if premium_aktif(paket):
             analiz(sonuc)
         else:
-            st.warning("Bu kullanıcı için analiz yetkisi kapalı.")
+            kilitli_ozellik(
+                "Analiz görünümü",
+                "Analiz görünümü aktif."
+            )
 
     st.divider()
 
-    if yetki_var("rapor_indirme"):
+    if premium_aktif(paket):
         st.download_button(
             "Filtrelenen sonuçları CSV indir",
             data=sonuc.to_csv(index=False, encoding="utf-8-sig"),
@@ -3372,7 +3227,10 @@ elif menu_secimi == "🔎 Sonuçlar":
             mime="text/csv",
         )
     else:
-        st.warning("Bu kullanıcı için rapor indirme yetkisi kapalı.")
+        kilitli_ozellik(
+            "Rapor indirme",
+            "Rapor indirme aktif."
+        )
 
 elif menu_secimi == "⭐ Fırsat Panosu":
     bolum_basligi("⭐ Fırsat Panosu", "Ürün türlerine göre öne çıkan ucuz ve yüksek puanlı kayıtlar.")
@@ -3386,8 +3244,8 @@ elif menu_secimi == "🆕 Yeni Kayıtlar":
     bolum_basligi("🆕 Yeni Kayıtlar", "Son veri güncellemesinde gelen kayıtlar ve onların fırsat özeti.")
     yeni_kayitlar_panosu(sonuc)
 
-
-# Kullanıcı paneli ayrı linktedir; ana menüde gösterilmez.
+elif menu_secimi == "👥 Kullanıcılar":
+    admin_paneli()
 
 st.divider()
 alt_csv_yukleme_alani()

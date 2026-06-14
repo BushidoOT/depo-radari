@@ -4,16 +4,7 @@
       "kullanici_adi": "admin",
       "sifre_hash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
       "ad": "Yönetici",
-      "rol": "admin",
-      "aktif": true,
-      "kayit_tarihi": "2026-06-14 00:00:00",
-      "yetkiler": {
-        "siteye_giris": true,
-        "csv_yukleme": true,
-        "analiz": true,
-        "rapor_indirme": true,
-        "kullanici_yonetimi": true
-      }
+      "aktif": true
     }
   ]
 }
