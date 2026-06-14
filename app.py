@@ -916,10 +916,6 @@ st.markdown(
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Türkiye geneli ihale, parti, fiyat ve fırsat takip ekranı.</p>
         <p class="small-note">Mesaha İO tarzı sade, hızlı ve mobil uyumlu arayüz.</p>
-        <div class="mesaha-mode-row">
-            <div class="mesaha-mode green">⚡ Giriş Modu</div>
-            <div class="mesaha-mode">🔎 İhale Takip</div>
-        </div>
     </div>
     """,
     unsafe_allow_html=True
@@ -1294,10 +1290,6 @@ def giris_zorunlu():
             <div class="mesaha-user-pill">Giriş</div>
             <div class="hero-title">🔐 Depo Radarı</div>
             <div class="hero-sub">Kullanıcı adı ve şifre ile giriş yap.</div>
-            <div class="mesaha-mode-row">
-                <div class="mesaha-mode green">⚡ Giriş Modu</div>
-                <div class="mesaha-mode">👤 Kayıt Ol</div>
-            </div>
             <p class="small-note">İlk kurulum: <b>admin</b> / <b>admin123</b></p>
         </div>
         """,
@@ -2855,26 +2847,35 @@ def bolum_basligi(baslik: str, aciklama: str = ""):
 
 def sol_menu_oku() -> str:
     secenekler = [
-        "🏠 Özet",
-        "🔎 Sonuçlar",
-        "⭐ Fırsat Panosu",
-        "🆕 Yeni Kayıtlar",
+        ("🏠", "Özet"),
+        ("🔎", "Sonuçlar"),
+        ("⭐", "Fırsat Panosu"),
+        ("🆕", "Yeni Kayıtlar"),
     ]
 
-    if st.session_state.get("giris_rol") == "admin":
-        secenekler.append("👥 Kullanıcılar")
+    secenek_degerleri = [f"{ikon} {ad}" for ikon, ad in secenekler]
 
     if "aktif_sayfa" not in st.session_state:
         st.session_state["aktif_sayfa"] = "🏠 Özet"
 
-    if st.session_state.get("hedef_sayfa") in secenekler:
+    if st.session_state.get("hedef_sayfa") in secenek_degerleri:
         st.session_state["aktif_sayfa"] = st.session_state.get("hedef_sayfa")
 
-    st.sidebar.markdown("### 🧭 Menü")
+    st.sidebar.markdown(
+        """
+        <div class="side-title-card">
+            <div class="side-title">🧭 Menü</div>
+            <div class="side-sub">Bölümler bağımsız kartlar halinde çalışır.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    for i, secim in enumerate(secenekler):
+    for i, (ikon, ad) in enumerate(secenekler):
+        secim = f"{ikon} {ad}"
         aktif = st.session_state.get("aktif_sayfa") == secim
-        etiket = secim if not aktif else f"✅ {secim}"
+        etiket = f"{ikon}  {ad}" if not aktif else f"✅  {ikon}  {ad}"
+
         if st.sidebar.button(
             etiket,
             key=f"menu_btn_{i}",
@@ -3554,10 +3555,21 @@ def alt_csv_yukleme_alani():
             st.rerun()
 
 
+paket = lisans_kontrolu()
+
+giris_zorunlu()
+kullanici_oturum_karti()
+admin_panel_linki_goster()
+
+# Kullanıcı paneli ayrı ekrandır; CSV okumadan açılır.
+if query_param_getir("admin") == "1":
+    kullanicilar_paneli()
+    st.stop()
+
 okunacak_csv = en_guncel_csv_bul()
 st.session_state["okunan_csv"] = okunacak_csv
 
-uploaded_csv = st.session_state.get("alt_csv_yukle_v39")
+uploaded_csv = st.session_state.get("alt_csv_yukle")
 
 if uploaded_csv is not None:
     df_raw = upload_oku(uploaded_csv)
@@ -3572,10 +3584,6 @@ if df_raw.empty:
     )
     st.stop()
 
-paket = lisans_kontrolu()
-
-giris_zorunlu()
-kullanici_oturum_karti()
 menu_secimi = sol_menu_oku()
 
 df = hazirla(df_raw)
@@ -3658,8 +3666,7 @@ elif menu_secimi == "🆕 Yeni Kayıtlar":
     bolum_basligi("🆕 Yeni Kayıtlar", "Son veri güncellemesinde gelen kayıtlar ve onların fırsat özeti.")
     yeni_kayitlar_panosu(sonuc)
 
-elif menu_secimi == "👥 Kullanıcılar":
-    admin_paneli()
+# Kullanıcı paneli ayrı ekrandadır.
 
 st.divider()
 alt_csv_yukleme_alani()
