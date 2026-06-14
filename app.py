@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v36",
+    page_title="Depo Radarı v37",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -461,6 +461,32 @@ st.markdown(
         opacity: .78;
         line-height: 1.4;
     }
+    .menu-group-note {
+        font-size: 12px;
+        opacity: .72;
+        margin: 6px 2px 10px 2px;
+    }
+    div[data-testid="stSidebar"] .stButton > button {
+        width: 100%;
+        border-radius: 16px;
+        padding: 0.78rem 0.90rem;
+        font-weight: 800;
+        justify-content: flex-start;
+        text-align: left;
+        border: 1px solid rgba(255,255,255,.12);
+        background: linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
+        box-shadow: 0 8px 18px rgba(0,0,0,.08);
+        transition: all .18s ease;
+    }
+    div[data-testid="stSidebar"] .stButton > button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(52,152,219,.45);
+    }
+    div[data-testid="stSidebar"] .stButton > button[kind="primary"] {
+        border-color: rgba(52,152,219,.72);
+        background: linear-gradient(135deg, rgba(52,152,219,.24), rgba(46,204,113,.16));
+        box-shadow: 0 12px 26px rgba(0,0,0,.14);
+    }
     .stButton > button {
         border-radius: 999px;
         font-weight: 850;
@@ -483,7 +509,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Türkiye geneli ihale, parti, fiyat ve fırsat takip ekranı.</p>
-        <p class="small-note">v36: modern menü + filtre sonrası otomatik sonuç ekranı + resmi OGM haritası.</p>
+        <p class="small-note">v37: modern butonlu menü + filtre sonrası otomatik sonuç ekranı.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -2019,31 +2045,46 @@ def bolum_basligi(baslik: str, aciklama: str = ""):
 
 
 def sol_menu_oku() -> str:
+    secenekler = [
+        "🏠 Özet",
+        "🔎 Sonuçlar",
+        "⭐ Fırsat Panosu",
+        "📌 Takip Listesi",
+        "🚨 Alarm Merkezi",
+        "🆕 Yeni Kayıtlar",
+    ]
+
+    if "aktif_sayfa_v37" not in st.session_state:
+        st.session_state["aktif_sayfa_v37"] = "🏠 Özet"
+
+    if st.session_state.get("hedef_sayfa_v37") in secenekler:
+        st.session_state["aktif_sayfa_v37"] = st.session_state.get("hedef_sayfa_v37")
+
     st.sidebar.markdown(
         """
         <div class="menu-title-box">
-            <div class="head">🧭 Hızlı Menü</div>
-            <div class="sub">İstediğin ekrana tek dokunuşla geç. Filtre uygulandığında sistem seni otomatik olarak Sonuçlar ekranına götürür.</div>
+            <div class="head">✨ Hızlı Menü</div>
+            <div class="sub">İstediğin ekrana tek dokunuşla geç. Filtre uygulayınca sistem seni otomatik olarak Sonuçlar ekranına taşır.</div>
         </div>
+        <div class="menu-group-note">Bölümler</div>
         """,
         unsafe_allow_html=True,
     )
 
-    secim = st.sidebar.radio(
-        "Bölüm",
-        [
-            "🏠 Özet",
-            "🔎 Sonuçlar",
-            "⭐ Fırsat Panosu",
-            "📌 Takip Listesi",
-            "🚨 Alarm Merkezi",
-            "🆕 Yeni Kayıtlar",
-        ],
-        key="sol_menu_v36",
-        label_visibility="collapsed",
-    )
+    for i, secim in enumerate(secenekler):
+        aktif = st.session_state.get("aktif_sayfa_v37") == secim
+        etiket = secim if not aktif else f"✅ {secim}"
+        if st.sidebar.button(
+            etiket,
+            key=f"menu_btn_v37_{i}",
+            use_container_width=True,
+            type="primary" if aktif else "secondary",
+        ):
+            st.session_state["aktif_sayfa_v37"] = secim
+            st.session_state.pop("hedef_sayfa_v37", None)
+            st.rerun()
 
-    return secim
+    return st.session_state.get("aktif_sayfa_v37", "🏠 Özet")
 
 def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
     st.sidebar.header("Filtreler")
@@ -2252,7 +2293,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
     )
 
     if filtre_aktif:
-        st.session_state["sol_menu_v36"] = "🔎 Sonuçlar"
+        st.session_state["hedef_sayfa_v37"] = "🔎 Sonuçlar"
 
     if sonuc.empty:
         return sonuc
@@ -2271,7 +2312,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         sonuc = sonuc.sort_values("parti_no", ascending=True)
 
     if filtre_aktif:
-        st.session_state["sol_menu_v36"] = "🔎 Sonuçlar"
+        st.session_state["hedef_sayfa_v37"] = "🔎 Sonuçlar"
 
     return sonuc
 
@@ -2715,6 +2756,11 @@ menu_secimi = sol_menu_oku()
 df = hazirla(df_raw)
 takip_hedefini_uygula()
 sonuc = filtrele(df, paket)
+
+if st.session_state.get("hedef_sayfa_v37"):
+    menu_secimi = st.session_state.get("hedef_sayfa_v37")
+    st.session_state["aktif_sayfa_v37"] = menu_secimi
+    st.session_state.pop("hedef_sayfa_v37", None)
 
 st.caption(f"Okunan dosya: **{okunacak_csv}** — Arama kutusunda parti no, ihale no, ürün, il, OİM ve OBM yazabilirsin.")
 
