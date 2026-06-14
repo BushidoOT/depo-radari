@@ -505,12 +505,421 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
+st.markdown(
+    """
+    <style>
+    :root{
+        --m-bg:#f4f7fb;
+        --m-card:#ffffff;
+        --m-line:#d8e2ef;
+        --m-text:#0f172a;
+        --m-muted:#64748b;
+        --m-green:#16a34a;
+        --m-blue:#2563eb;
+        --m-yellow:#facc15;
+        --m-red:#ef4444;
+        --m-purple:#7c3aed;
+        --m-shadow:0 16px 38px rgba(15,23,42,.08);
+    }
+
+    html, body, .stApp{
+        background:var(--m-bg) !important;
+        color:var(--m-text) !important;
+    }
+
+    .block-container{
+        max-width:1180px;
+        padding-top:1rem !important;
+    }
+
+    .hero{
+        background:var(--m-card) !important;
+        color:var(--m-text) !important;
+        border:2px solid var(--m-line) !important;
+        border-radius:26px !important;
+        box-shadow:var(--m-shadow) !important;
+        padding:24px 26px !important;
+        margin-bottom:22px !important;
+        overflow:hidden;
+    }
+
+    .hero:after{display:none !important;}
+
+    .hero-title{
+        font-size:44px !important;
+        font-weight:950 !important;
+        letter-spacing:-1.5px !important;
+        color:#111827 !important;
+        line-height:1.05 !important;
+    }
+
+    .hero-sub{
+        color:#4b5563 !important;
+        font-weight:750 !important;
+        font-size:16px !important;
+        margin-top:14px !important;
+    }
+
+    .small-note{
+        color:#64748b !important;
+        font-weight:700 !important;
+        font-size:15px !important;
+    }
+
+    .mesaha-user-pill{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        border:2px solid #bbf7d0;
+        background:#ecfdf5;
+        color:#047857;
+        border-radius:999px;
+        padding:10px 16px;
+        font-size:20px;
+        font-weight:950;
+        float:right;
+        margin-top:2px;
+    }
+
+    .mesaha-mode-row{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:14px;
+        margin-top:18px;
+    }
+
+    .mesaha-mode{
+        border:2px solid var(--m-line);
+        background:#f8fafc;
+        border-radius:28px;
+        padding:18px 20px;
+        text-align:center;
+        font-size:22px;
+        font-weight:950;
+        color:#111827;
+    }
+
+    .mesaha-mode.green{
+        background:var(--m-green);
+        color:white;
+        border-color:var(--m-green);
+    }
+
+    .section-head,
+    .result-card,
+    .product-board,
+    .topbox,
+    .metric-shell,
+    div[data-testid="stExpander"]{
+        background:var(--m-card) !important;
+        border:2px solid var(--m-line) !important;
+        border-radius:24px !important;
+        box-shadow:var(--m-shadow) !important;
+        color:var(--m-text) !important;
+    }
+
+    .section-head{padding:20px 22px !important;}
+
+    .section-head-title{
+        font-size:30px !important;
+        font-weight:950 !important;
+        letter-spacing:-.7px !important;
+        color:#111827 !important;
+    }
+
+    .section-head-sub{
+        color:#64748b !important;
+        font-size:15px !important;
+        font-weight:700 !important;
+    }
+
+    .result-card{
+        padding:22px !important;
+        margin-bottom:18px !important;
+    }
+
+    .result-title{
+        font-size:23px !important;
+        color:#111827 !important;
+        font-weight:950 !important;
+    }
+
+    .price{
+        font-size:34px !important;
+        color:#111827 !important;
+        font-weight:950 !important;
+    }
+
+    .mini{
+        color:#475569 !important;
+        font-size:15px !important;
+        font-weight:650 !important;
+    }
+
+    .badge,
+    .score-badge,
+    .price-status,
+    .warn,
+    .quick-chip{
+        border-radius:999px !important;
+        padding:8px 12px !important;
+        font-weight:900 !important;
+        border:2px solid var(--m-line) !important;
+        background:#f8fafc !important;
+        color:#111827 !important;
+    }
+
+    .score-badge{
+        background:#dcfce7 !important;
+        border-color:#86efac !important;
+        color:#166534 !important;
+    }
+
+    .price-status{
+        background:#dbeafe !important;
+        border-color:#93c5fd !important;
+        color:#1e40af !important;
+    }
+
+    .warn{
+        background:#fef3c7 !important;
+        border-color:#facc15 !important;
+        color:#92400e !important;
+    }
+
+    div[data-testid="stMetric"]{
+        background:var(--m-card) !important;
+        border:2px solid var(--m-line) !important;
+        border-radius:24px !important;
+        box-shadow:var(--m-shadow) !important;
+        padding:18px 18px !important;
+    }
+
+    div[data-testid="stMetricLabel"] p{
+        color:#64748b !important;
+        font-weight:900 !important;
+        text-transform:uppercase;
+        letter-spacing:.04em;
+    }
+
+    div[data-testid="stMetricValue"]{
+        color:#111827 !important;
+        font-size:32px !important;
+        font-weight:950 !important;
+    }
+
+    div[data-testid="stSidebar"]{
+        background:#eef3f9 !important;
+        border-right:2px solid var(--m-line) !important;
+    }
+
+    div[data-testid="stSidebar"] *{color:#111827 !important;}
+
+    div[data-testid="stSidebar"] h1,
+    div[data-testid="stSidebar"] h2,
+    div[data-testid="stSidebar"] h3{
+        color:#111827 !important;
+        font-weight:950 !important;
+    }
+
+    div[data-testid="stSidebar"] .stButton > button{
+        width:100%;
+        min-height:54px;
+        border-radius:22px !important;
+        background:#ffffff !important;
+        color:#111827 !important;
+        border:2px solid var(--m-line) !important;
+        box-shadow:none !important;
+        font-size:16px !important;
+        font-weight:950 !important;
+        justify-content:center !important;
+        text-align:center !important;
+    }
+
+    div[data-testid="stSidebar"] .stButton > button:hover{
+        transform:translateY(-1px);
+        border-color:#93c5fd !important;
+        background:#f8fafc !important;
+    }
+
+    div[data-testid="stSidebar"] .stButton > button[kind="primary"]{
+        background:var(--m-blue) !important;
+        color:#ffffff !important;
+        border-color:var(--m-blue) !important;
+        box-shadow:0 12px 24px rgba(37,99,235,.20) !important;
+    }
+
+    div[data-testid="stSidebar"] .stSuccess{
+        background:#dcfce7 !important;
+        border:2px solid #86efac !important;
+        border-radius:16px !important;
+    }
+
+    div[data-testid="stSidebar"] .stInfo{
+        background:#eff6ff !important;
+        border:2px solid #bfdbfe !important;
+        border-radius:16px !important;
+    }
+
+    div[data-testid="stTextInput"] input,
+    div[data-testid="stNumberInput"] input,
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    div[data-testid="stTextArea"] textarea{
+        background:#ffffff !important;
+        color:#111827 !important;
+        border:2px solid var(--m-line) !important;
+        border-radius:18px !important;
+        min-height:52px !important;
+        font-weight:800 !important;
+        box-shadow:none !important;
+    }
+
+    div[data-testid="stTextInput"] input:focus,
+    div[data-testid="stNumberInput"] input:focus,
+    div[data-testid="stTextArea"] textarea:focus{
+        border-color:var(--m-blue) !important;
+        box-shadow:0 0 0 4px rgba(37,99,235,.14) !important;
+    }
+
+    .stButton > button,
+    .stDownloadButton > button,
+    button[kind="primary"],
+    button[kind="secondary"]{
+        border-radius:22px !important;
+        font-weight:950 !important;
+        border:2px solid var(--m-line) !important;
+        min-height:52px !important;
+    }
+
+    .stButton > button[kind="primary"],
+    button[kind="primary"]{
+        background:var(--m-blue) !important;
+        color:white !important;
+        border-color:var(--m-blue) !important;
+    }
+
+    div[data-testid="stTabs"] button{
+        border-radius:22px !important;
+        border:2px solid var(--m-line) !important;
+        background:#ffffff !important;
+        color:#111827 !important;
+        font-weight:950 !important;
+        padding:12px 20px !important;
+    }
+
+    div[data-testid="stTabs"] button[aria-selected="true"]{
+        background:var(--m-blue) !important;
+        color:white !important;
+        border-color:var(--m-blue) !important;
+    }
+
+    .product-board{
+        border-width:3px !important;
+        border-left-width:10px !important;
+    }
+
+    .urun-tomruk{
+        background:#fef9c3 !important;
+        border-color:#facc15 !important;
+        color:#713f12 !important;
+    }
+
+    .urun-maden{
+        background:#dbeafe !important;
+        border-color:#2563eb !important;
+        color:#1e3a8a !important;
+    }
+
+    .urun-kagitlik{
+        background:#fee2e2 !important;
+        border-color:#ef4444 !important;
+        color:#7f1d1d !important;
+    }
+
+    .urun-sanayi{
+        background:#dcfce7 !important;
+        border-color:#16a34a !important;
+        color:#14532d !important;
+    }
+
+    .urun-dikili{
+        background:#ede9fe !important;
+        border-color:#7c3aed !important;
+        color:#3b0764 !important;
+    }
+
+    .product-board-title,
+    .product-board-main,
+    .product-board-sub{color:inherit !important;}
+
+    .product-board-title{
+        font-size:15px !important;
+        font-weight:950 !important;
+    }
+
+    .product-board-main{
+        font-size:22px !important;
+        font-weight:950 !important;
+    }
+
+    .product-board-sub{
+        font-size:14px !important;
+        font-weight:750 !important;
+    }
+
+    .topbox{padding:18px !important;}
+
+    .topbox-title{
+        color:#64748b !important;
+        font-weight:900 !important;
+    }
+
+    .topbox-main{
+        color:#111827 !important;
+        font-size:22px !important;
+        font-weight:950 !important;
+    }
+
+    .topbox-sub{
+        color:#475569 !important;
+        font-weight:700 !important;
+    }
+
+    div[data-testid="stDataFrame"],
+    div[data-testid="stTable"]{
+        border:2px solid var(--m-line) !important;
+        border-radius:24px !important;
+        overflow:hidden !important;
+        box-shadow:var(--m-shadow) !important;
+    }
+
+    .stAlert{
+        border-radius:18px !important;
+        border-width:2px !important;
+    }
+
+    @media (max-width: 800px){
+        .hero-title{font-size:34px !important;}
+        .mesaha-mode-row{grid-template-columns:1fr;}
+        .block-container{padding-left:.75rem !important; padding-right:.75rem !important;}
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 st.markdown(
     """
     <div class="hero">
+        <div class="mesaha-user-pill">Depo • Radarı</div>
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Türkiye geneli ihale, parti, fiyat ve fırsat takip ekranı.</p>
-        <p class="small-note">Giriş sistemi, kullanıcı paneli, kademeli filtreler ve CSV yükleme alanı.</p>
+        <p class="small-note">Mesaha İO tarzı sade, hızlı ve mobil uyumlu arayüz.</p>
+        <div class="mesaha-mode-row">
+            <div class="mesaha-mode green">⚡ Giriş Modu</div>
+            <div class="mesaha-mode">🔎 İhale Takip</div>
+        </div>
     </div>
     """,
     unsafe_allow_html=True
@@ -882,9 +1291,14 @@ def giris_zorunlu():
     st.markdown(
         """
         <div class="hero">
-            <div class="hero-title">🔐 Depo Radarı Girişi</div>
-            <div class="hero-sub">Sistemi kullanmak için kullanıcı adı ve şifre ile giriş yap.</div>
-            <p class="small-note">İlk kurulum varsayılan hesabı: <b>admin</b> / <b>admin123</b></p>
+            <div class="mesaha-user-pill">Giriş</div>
+            <div class="hero-title">🔐 Depo Radarı</div>
+            <div class="hero-sub">Kullanıcı adı ve şifre ile giriş yap.</div>
+            <div class="mesaha-mode-row">
+                <div class="mesaha-mode green">⚡ Giriş Modu</div>
+                <div class="mesaha-mode">👤 Kayıt Ol</div>
+            </div>
+            <p class="small-note">İlk kurulum: <b>admin</b> / <b>admin123</b></p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -2456,7 +2870,7 @@ def sol_menu_oku() -> str:
     if st.session_state.get("hedef_sayfa") in secenekler:
         st.session_state["aktif_sayfa"] = st.session_state.get("hedef_sayfa")
 
-    st.sidebar.markdown("### Menü")
+    st.sidebar.markdown("### 🧭 Menü")
 
     for i, secim in enumerate(secenekler):
         aktif = st.session_state.get("aktif_sayfa") == secim
