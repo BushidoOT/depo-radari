@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v39",
+    page_title="Depo Radarı",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -510,7 +510,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Türkiye geneli ihale, parti, fiyat ve fırsat takip ekranı.</p>
-        <p class="small-note">v39: takip kaldırıldı, sade menü, kayıt olma, admin paneli ve CSV yükleme en altta.</p>
+        <p class="small-note">Giriş sistemi, kullanıcı paneli, kademeli filtreler ve CSV yükleme alanı.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -672,13 +672,43 @@ def lisans_kodlarini_oku():
     return kodlar
 
 
+OTURUM_GIZLI_ANAHTAR = "depo_radari_oturum_2026"
+
+
 def sifre_hash_uret(metin: str) -> str:
     return hashlib.sha256(str(metin or "").encode("utf-8")).hexdigest()
 
 
+def oturum_token_uret(kullanici_adi: str, sifre_hash: str) -> str:
+    ham = f"{kullanici_adi}|{sifre_hash}|{OTURUM_GIZLI_ANAHTAR}"
+    return hashlib.sha256(ham.encode("utf-8")).hexdigest()
+
+
+def query_param_getir(anahtar: str, varsayilan: str = "") -> str:
+    try:
+        deger = st.query_params.get(anahtar, varsayilan)
+        if isinstance(deger, list):
+            return str(deger[0]) if deger else varsayilan
+        return str(deger or varsayilan)
+    except Exception:
+        return varsayilan
+
+
+def query_param_ayarla(**kwargs):
+    try:
+        for key, value in kwargs.items():
+            if value is None:
+                if key in st.query_params:
+                    del st.query_params[key]
+            else:
+                st.query_params[key] = str(value)
+    except Exception:
+        pass
+
+
 def varsayilan_kullanici_dosyasi_olustur():
     """
-    İlk kurulumda admin kullanıcısını oluşturur.
+    İlk kurulumda yönetici kullanıcısını oluşturur.
     Varsayılan: admin / admin123
     """
     if os.path.isfile(KULLANICI_DOSYASI):
@@ -721,13 +751,17 @@ def kullanici_verisi_yukle() -> dict:
     if "kullanicilar" not in veri or not isinstance(veri["kullanicilar"], list):
         veri["kullanicilar"] = []
 
-    # Eski kullanıcı dosyalarında rol yoksa tamamla.
+    # Eski kullanıcı dosyalarını tamamla.
     degisti = False
     for item in veri["kullanicilar"]:
         if "rol" not in item:
             item["rol"] = "admin" if str(item.get("kullanici_adi", "")).lower() == "admin" else "user"
             degisti = True
         if "aktif" not in item:
+            item["aktif"] = True
+            degisti = True
+        if str(item.get("kullanici_adi", "")).lower() != "admin" and item.get("aktif") is False:
+            # Artık yönetici onayı gerekmiyor; eski bekleyenleri de aktif yap.
             item["aktif"] = True
             degisti = True
 
@@ -763,7 +797,7 @@ def kullanici_dogrula(kullanici_adi: str, sifre: str):
         return None, "Kullanıcı bulunamadı."
 
     if not bool(kayit.get("aktif", True)):
-        return None, "Hesap henüz aktif değil. Yönetici onayı gerekiyor."
+        return None, "Hesap pasif. Yönetici panelinden aktif yapılması gerekiyor."
 
     if str(kayit.get("sifre_hash", "")) != sifre_hash_uret(sifre):
         return None, "Şifre yanlış."
@@ -793,26 +827,56 @@ def kullanici_kayit_ol(kullanici_adi: str, ad: str, sifre: str, sifre_tekrar: st
     if kullanici_adi.lower() in mevcutlar:
         return False, "Bu kullanıcı adı zaten var."
 
+    # Artık onay bekletmiyoruz; kullanıcı hemen aktif gelir.
     veri["kullanicilar"].append(
         {
             "kullanici_adi": kullanici_adi,
             "sifre_hash": sifre_hash_uret(sifre),
             "ad": ad or kullanici_adi,
             "rol": "user",
-            "aktif": False,
+            "aktif": True,
             "kayit_tarihi": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
     )
 
     try:
         kullanici_dosyasi_kaydet(veri)
-        return True, "Kayıt alındı. Yönetici onayından sonra giriş yapabilirsin."
+        return True, "Kayıt tamamlandı. Artık giriş yapabilirsin."
     except Exception as e:
         return False, f"Kayıt kaydedilemedi: {e}"
 
 
+def oturumu_queryden_yukle():
+    """
+    Sayfa yenilenince çıkış olmasın diye kullanıcı adı ve token URL parametresinden okunur.
+    """
+    if st.session_state.get("giris_ok"):
+        return
+
+    kullanici_adi = query_param_getir("u")
+    token = query_param_getir("oturum")
+
+    if not kullanici_adi or not token:
+        return
+
+    kayit = kullanicilari_yukle().get(kullanici_adi.lower())
+
+    if not kayit or not bool(kayit.get("aktif", True)):
+        return
+
+    dogru_token = oturum_token_uret(kullanici_adi.lower(), kayit.get("sifre_hash", ""))
+
+    if token == dogru_token:
+        st.session_state["giris_ok"] = True
+        st.session_state["giris_kullanici"] = str(kayit.get("ad") or kayit.get("kullanici_adi") or kullanici_adi)
+        st.session_state["giris_kullanici_adi"] = str(kayit.get("kullanici_adi") or kullanici_adi)
+        st.session_state["giris_rol"] = str(kayit.get("rol", "user"))
+
+
 def giris_zorunlu():
-    if st.session_state.get("giris_ok_v39"):
+    oturumu_queryden_yukle()
+
+    if st.session_state.get("giris_ok"):
         return
 
     st.markdown(
@@ -833,9 +897,10 @@ def giris_zorunlu():
 
         with sekme_giris:
             st.markdown('<div class="result-card">', unsafe_allow_html=True)
-            with st.form("giris_formu_v39"):
-                kullanici_adi = st.text_input("Kullanıcı adı", key="login_user_v39")
-                sifre = st.text_input("Şifre", type="password", key="login_pass_v39")
+            with st.form("giris_formu"):
+                kullanici_adi = st.text_input("Kullanıcı adı", key="login_user")
+                sifre = st.text_input("Şifre", type="password", key="login_pass")
+                beni_hatirla = st.checkbox("Beni hatırla", value=True, key="remember_login")
                 giris = st.form_submit_button("Giriş yap", use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -843,9 +908,18 @@ def giris_zorunlu():
                 kayit, mesaj = kullanici_dogrula(kullanici_adi, sifre)
 
                 if kayit:
-                    st.session_state["giris_ok_v39"] = True
-                    st.session_state["giris_kullanici_v39"] = str(kayit.get("ad") or kayit.get("kullanici_adi") or kullanici_adi)
-                    st.session_state["giris_rol_v39"] = str(kayit.get("rol", "user"))
+                    temiz_kullanici = str(kayit.get("kullanici_adi") or kullanici_adi).strip().lower()
+                    st.session_state["giris_ok"] = True
+                    st.session_state["giris_kullanici"] = str(kayit.get("ad") or kayit.get("kullanici_adi") or kullanici_adi)
+                    st.session_state["giris_kullanici_adi"] = temiz_kullanici
+                    st.session_state["giris_rol"] = str(kayit.get("rol", "user"))
+
+                    if beni_hatirla:
+                        query_param_ayarla(
+                            u=temiz_kullanici,
+                            oturum=oturum_token_uret(temiz_kullanici, kayit.get("sifre_hash", "")),
+                        )
+
                     st.success("Giriş başarılı. Yönlendiriliyorsun...")
                     st.rerun()
                 else:
@@ -853,11 +927,11 @@ def giris_zorunlu():
 
         with sekme_kayit:
             st.markdown('<div class="result-card">', unsafe_allow_html=True)
-            with st.form("kayit_formu_v39"):
-                yeni_ad = st.text_input("Ad / firma adı", key="register_name_v39")
-                yeni_kullanici = st.text_input("Kullanıcı adı", key="register_user_v39")
-                yeni_sifre = st.text_input("Şifre", type="password", key="register_pass_v39")
-                yeni_sifre_tekrar = st.text_input("Şifre tekrar", type="password", key="register_pass2_v39")
+            with st.form("kayit_formu"):
+                yeni_ad = st.text_input("Ad / firma adı", key="register_name")
+                yeni_kullanici = st.text_input("Kullanıcı adı", key="register_user")
+                yeni_sifre = st.text_input("Şifre", type="password", key="register_pass")
+                yeni_sifre_tekrar = st.text_input("Şifre tekrar", type="password", key="register_pass2")
                 kayit_buton = st.form_submit_button("Kayıt ol", use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -872,8 +946,8 @@ def giris_zorunlu():
 
 
 def kullanici_oturum_karti():
-    ad = st.session_state.get("giris_kullanici_v39", "Kullanıcı")
-    rol = st.session_state.get("giris_rol_v39", "user")
+    ad = st.session_state.get("giris_kullanici", "Kullanıcı")
+    rol = st.session_state.get("giris_rol", "user")
 
     st.sidebar.markdown("### 👤 Oturum")
     st.sidebar.success(f"{ad}")
@@ -881,66 +955,63 @@ def kullanici_oturum_karti():
     if rol == "admin":
         st.sidebar.caption("Yetki: Yönetici")
 
-    if st.sidebar.button("Çıkış yap", key="logout_v39", use_container_width=True):
-        for key in ["giris_ok_v39", "giris_kullanici_v39", "giris_rol_v39"]:
+    if st.sidebar.button("Çıkış yap", key="logout", use_container_width=True):
+        for key in ["giris_ok", "giris_kullanici", "giris_kullanici_adi", "giris_rol"]:
             st.session_state.pop(key, None)
+        query_param_ayarla(u=None, oturum=None)
         st.rerun()
 
 
-def admin_paneli():
-    if st.session_state.get("giris_rol_v39") != "admin":
+def kullanicilar_paneli():
+    if st.session_state.get("giris_rol") != "admin":
         st.warning("Bu alan sadece yönetici için açık.")
         return
 
-    bolum_basligi("🛠️ Yönetici Paneli", "Kullanıcıları onayla, pasifleştir, sil veya yeni kullanıcı ekle.")
+    bolum_basligi("👥 Kullanıcılar", "Kayıt olan kullanıcıları gör, aktif/pasif yap, rol değiştir veya şifre güncelle.")
 
     veri = kullanici_verisi_yukle()
     kullanicilar = veri.get("kullanicilar", [])
 
-    st.subheader("Kullanıcılar")
-
     if not kullanicilar:
         st.info("Kullanıcı bulunamadı.")
-    else:
-        tablo_veri = []
-        for item in kullanicilar:
-            tablo_veri.append(
-                {
-                    "Kullanıcı adı": item.get("kullanici_adi", ""),
-                    "Ad": item.get("ad", ""),
-                    "Rol": item.get("rol", "user"),
-                    "Aktif": "Evet" if item.get("aktif", False) else "Hayır",
-                    "Kayıt": item.get("kayit_tarihi", ""),
-                }
-            )
+        return
 
-        st.dataframe(pd.DataFrame(tablo_veri), use_container_width=True, hide_index=True)
+    tablo_veri = []
+    for item in kullanicilar:
+        tablo_veri.append(
+            {
+                "Kullanıcı adı": item.get("kullanici_adi", ""),
+                "Ad": item.get("ad", ""),
+                "Rol": item.get("rol", "user"),
+                "Aktif": "Evet" if item.get("aktif", False) else "Hayır",
+                "Kayıt": item.get("kayit_tarihi", ""),
+            }
+        )
+
+    st.dataframe(pd.DataFrame(tablo_veri), use_container_width=True, hide_index=True)
 
     st.divider()
-
     st.subheader("Kullanıcı işlemleri")
-
-    aktif_kullanici = st.session_state.get("giris_kullanici_v39", "")
 
     for i, item in enumerate(list(kullanicilar)):
         kullanici_adi = str(item.get("kullanici_adi", "") or "")
         rol = str(item.get("rol", "user") or "user")
         aktif = bool(item.get("aktif", False))
 
-        with st.expander(f"{kullanici_adi} — {'Aktif' if aktif else 'Onay bekliyor / pasif'}", expanded=False):
+        with st.expander(f"{kullanici_adi} — {'Aktif' if aktif else 'Pasif'}", expanded=False):
             c1, c2, c3, c4 = st.columns(4)
 
             with c1:
-                if st.button("Aktif yap", key=f"user_active_v39_{i}"):
+                if st.button("Aktif yap", key=f"user_active_{i}"):
                     veri["kullanicilar"][i]["aktif"] = True
                     kullanici_dosyasi_kaydet(veri)
                     st.success("Kullanıcı aktif edildi.")
                     st.rerun()
 
             with c2:
-                if st.button("Pasif yap", key=f"user_passive_v39_{i}"):
+                if st.button("Pasif yap", key=f"user_passive_{i}"):
                     if kullanici_adi.lower() == "admin":
-                        st.warning("Ana admin pasifleştirilemez.")
+                        st.warning("Ana yönetici pasifleştirilemez.")
                     else:
                         veri["kullanicilar"][i]["aktif"] = False
                         kullanici_dosyasi_kaydet(veri)
@@ -949,9 +1020,9 @@ def admin_paneli():
 
             with c3:
                 yeni_rol = "user" if rol == "admin" else "admin"
-                if st.button(f"Rol: {yeni_rol}", key=f"user_role_v39_{i}"):
+                if st.button(f"Rol: {yeni_rol}", key=f"user_role_{i}"):
                     if kullanici_adi.lower() == "admin":
-                        st.warning("Ana admin rolü değiştirilemez.")
+                        st.warning("Ana yönetici rolü değiştirilemez.")
                     else:
                         veri["kullanicilar"][i]["rol"] = yeni_rol
                         kullanici_dosyasi_kaydet(veri)
@@ -959,17 +1030,17 @@ def admin_paneli():
                         st.rerun()
 
             with c4:
-                if st.button("Sil", key=f"user_delete_v39_{i}"):
+                if st.button("Sil", key=f"user_delete_{i}"):
                     if kullanici_adi.lower() == "admin":
-                        st.warning("Ana admin silinemez.")
+                        st.warning("Ana yönetici silinemez.")
                     else:
                         veri["kullanicilar"].pop(i)
                         kullanici_dosyasi_kaydet(veri)
                         st.success("Kullanıcı silindi.")
                         st.rerun()
 
-            with st.form(f"sifre_sifirla_form_v39_{i}"):
-                yeni_sifre = st.text_input("Yeni şifre", type="password", key=f"reset_pass_v39_{i}")
+            with st.form(f"sifre_sifirla_form_{i}"):
+                yeni_sifre = st.text_input("Yeni şifre", type="password", key=f"reset_pass_{i}")
                 kaydet = st.form_submit_button("Şifreyi güncelle")
                 if kaydet:
                     if len(yeni_sifre) < 6:
@@ -981,10 +1052,9 @@ def admin_paneli():
                         st.rerun()
 
     st.divider()
-
     st.subheader("Yeni kullanıcı ekle")
 
-    with st.form("admin_user_add_v39"):
+    with st.form("admin_user_add"):
         ad = st.text_input("Ad / firma adı")
         kullanici_adi = st.text_input("Kullanıcı adı")
         sifre = st.text_input("Şifre", type="password")
@@ -2377,31 +2447,31 @@ def sol_menu_oku() -> str:
         "🆕 Yeni Kayıtlar",
     ]
 
-    if st.session_state.get("giris_rol_v39") == "admin":
-        secenekler.append("🛠️ Yönetim")
+    if st.session_state.get("giris_rol") == "admin":
+        secenekler.append("👥 Kullanıcılar")
 
-    if "aktif_sayfa_v39" not in st.session_state:
-        st.session_state["aktif_sayfa_v39"] = "🏠 Özet"
+    if "aktif_sayfa" not in st.session_state:
+        st.session_state["aktif_sayfa"] = "🏠 Özet"
 
-    if st.session_state.get("hedef_sayfa_v39") in secenekler:
-        st.session_state["aktif_sayfa_v39"] = st.session_state.get("hedef_sayfa_v39")
+    if st.session_state.get("hedef_sayfa") in secenekler:
+        st.session_state["aktif_sayfa"] = st.session_state.get("hedef_sayfa")
 
     st.sidebar.markdown("### Menü")
 
     for i, secim in enumerate(secenekler):
-        aktif = st.session_state.get("aktif_sayfa_v39") == secim
+        aktif = st.session_state.get("aktif_sayfa") == secim
         etiket = secim if not aktif else f"✅ {secim}"
         if st.sidebar.button(
             etiket,
-            key=f"menu_btn_v39_{i}",
+            key=f"menu_btn_{i}",
             use_container_width=True,
             type="primary" if aktif else "secondary",
         ):
-            st.session_state["aktif_sayfa_v39"] = secim
-            st.session_state.pop("hedef_sayfa_v39", None)
+            st.session_state["aktif_sayfa"] = secim
+            st.session_state.pop("hedef_sayfa", None)
             st.rerun()
 
-    return st.session_state.get("aktif_sayfa_v39", "🏠 Özet")
+    return st.session_state.get("aktif_sayfa", "🏠 Özet")
 
 
 def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
@@ -2613,7 +2683,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
     )
 
     if filtre_aktif:
-        st.session_state["hedef_sayfa_v39"] = "🔎 Sonuçlar"
+        st.session_state["hedef_sayfa"] = "🔎 Sonuçlar"
 
     if sonuc.empty:
         return sonuc
@@ -3097,10 +3167,10 @@ menu_secimi = sol_menu_oku()
 df = hazirla(df_raw)
 sonuc = filtrele(df, paket)
 
-if st.session_state.get("hedef_sayfa_v39"):
-    menu_secimi = st.session_state.get("hedef_sayfa_v39")
-    st.session_state["aktif_sayfa_v39"] = menu_secimi
-    st.session_state.pop("hedef_sayfa_v39", None)
+if st.session_state.get("hedef_sayfa"):
+    menu_secimi = st.session_state.get("hedef_sayfa")
+    st.session_state["aktif_sayfa"] = menu_secimi
+    st.session_state.pop("hedef_sayfa", None)
 
 paket_bilgi_goster(paket)
 
@@ -3174,7 +3244,7 @@ elif menu_secimi == "🆕 Yeni Kayıtlar":
     bolum_basligi("🆕 Yeni Kayıtlar", "Son veri güncellemesinde gelen kayıtlar ve onların fırsat özeti.")
     yeni_kayitlar_panosu(sonuc)
 
-elif menu_secimi == "🛠️ Yönetim":
+elif menu_secimi == "👥 Kullanıcılar":
     admin_paneli()
 
 st.divider()
