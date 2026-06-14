@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Depo Radarı v37",
+    page_title="Depo Radarı v38",
     page_icon="🌲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -24,6 +24,7 @@ CSV_ONCELIKLI_DOSYALAR = [
 ]
 
 OZET_DOSYASI = "depo_radari_ozet.json"
+KULLANICI_DOSYASI = "depo_radari_kullanicilar.json"
 
 st.markdown(
     """
@@ -509,7 +510,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-title">🌲 Depo Radarı</div>
         <p class="hero-sub">Türkiye geneli ihale, parti, fiyat ve fırsat takip ekranı.</p>
-        <p class="small-note">v37: modern butonlu menü + filtre sonrası otomatik sonuç ekranı.</p>
+        <p class="small-note">v38: giriş sistemi + takip kaldırıldı + kademeli filtreler.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -669,6 +670,105 @@ def lisans_kodlarini_oku():
         pass
 
     return kodlar
+
+
+def sifre_hash_uret(metin: str) -> str:
+    return hashlib.sha256(str(metin or "").encode("utf-8")).hexdigest()
+
+
+def varsayilan_kullanici_dosyasi_olustur():
+    if os.path.isfile(KULLANICI_DOSYASI):
+        return
+    varsayilan = {
+        "kullanicilar": [
+            {
+                "kullanici_adi": "admin",
+                "sifre_hash": sifre_hash_uret("admin123"),
+                "ad": "Yönetici",
+                "aktif": True,
+            }
+        ]
+    }
+    try:
+        with open(KULLANICI_DOSYASI, "w", encoding="utf-8") as f:
+            json.dump(varsayilan, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def kullanicilari_yukle() -> dict:
+    varsayilan_kullanici_dosyasi_olustur()
+    try:
+        with open(KULLANICI_DOSYASI, "r", encoding="utf-8") as f:
+            veri = json.load(f)
+    except Exception:
+        veri = {"kullanicilar": []}
+
+    sonuc = {}
+    for item in veri.get("kullanicilar", []):
+        kullanici_adi = str(item.get("kullanici_adi", "") or "").strip()
+        if not kullanici_adi:
+            continue
+        sonuc[kullanici_adi.lower()] = item
+    return sonuc
+
+
+def kullanici_dogrula(kullanici_adi: str, sifre: str):
+    kayitlar = kullanicilari_yukle()
+    kayit = kayitlar.get(str(kullanici_adi or "").strip().lower())
+    if not kayit:
+        return None
+    if not bool(kayit.get("aktif", True)):
+        return None
+    if str(kayit.get("sifre_hash", "")) != sifre_hash_uret(sifre):
+        return None
+    return kayit
+
+
+def giris_zorunlu():
+    if st.session_state.get("giris_ok_v38"):
+        return
+
+    st.markdown(
+        """
+        <div class="hero">
+            <div class="hero-title">🔐 Depo Radarı Girişi</div>
+            <div class="hero-sub">Sistemi kullanmak için kullanıcı adı ve şifre ile giriş yap.</div>
+            <p class="small-note">İlk kurulum varsayılan hesabı: <b>admin</b> / <b>admin123</b></p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    sol, orta, sag = st.columns([1, 1.2, 1])
+    with orta:
+        st.markdown('<div class="result-card">', unsafe_allow_html=True)
+        with st.form("giris_formu_v38"):
+            kullanici_adi = st.text_input("Kullanıcı adı", key="login_user_v38")
+            sifre = st.text_input("Şifre", type="password", key="login_pass_v38")
+            giris = st.form_submit_button("Giriş yap", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        if giris:
+            kayit = kullanici_dogrula(kullanici_adi, sifre)
+            if kayit:
+                st.session_state["giris_ok_v38"] = True
+                st.session_state["giris_kullanici_v38"] = str(kayit.get("ad") or kayit.get("kullanici_adi") or kullanici_adi)
+                st.success("Giriş başarılı. Yönlendiriliyorsun...")
+                st.rerun()
+            else:
+                st.error("Kullanıcı adı veya şifre yanlış.")
+
+    st.stop()
+
+
+def kullanici_oturum_karti():
+    ad = st.session_state.get("giris_kullanici_v38", "Kullanıcı")
+    st.sidebar.markdown("### 👤 Oturum")
+    st.sidebar.success(f"Giriş yapıldı: {ad}")
+    if st.sidebar.button("Çıkış yap", key="logout_v38", use_container_width=True):
+        for key in ["giris_ok_v38", "giris_kullanici_v38"]:
+            st.session_state.pop(key, None)
+        st.rerun()
 
 
 def lisans_kontrolu():
@@ -2049,22 +2149,20 @@ def sol_menu_oku() -> str:
         "🏠 Özet",
         "🔎 Sonuçlar",
         "⭐ Fırsat Panosu",
-        "📌 Takip Listesi",
-        "🚨 Alarm Merkezi",
         "🆕 Yeni Kayıtlar",
     ]
 
-    if "aktif_sayfa_v37" not in st.session_state:
-        st.session_state["aktif_sayfa_v37"] = "🏠 Özet"
+    if "aktif_sayfa_v38" not in st.session_state:
+        st.session_state["aktif_sayfa_v38"] = "🏠 Özet"
 
-    if st.session_state.get("hedef_sayfa_v37") in secenekler:
-        st.session_state["aktif_sayfa_v37"] = st.session_state.get("hedef_sayfa_v37")
+    if st.session_state.get("hedef_sayfa_v38") in secenekler:
+        st.session_state["aktif_sayfa_v38"] = st.session_state.get("hedef_sayfa_v38")
 
     st.sidebar.markdown(
         """
         <div class="menu-title-box">
             <div class="head">✨ Hızlı Menü</div>
-            <div class="sub">İstediğin ekrana tek dokunuşla geç. Filtre uygulayınca sistem seni otomatik olarak Sonuçlar ekranına taşır.</div>
+            <div class="sub">Modern kısa yol menüsü. Filtre uygulayınca sistem seni otomatik olarak Sonuçlar ekranına taşır.</div>
         </div>
         <div class="menu-group-note">Bölümler</div>
         """,
@@ -2072,23 +2170,23 @@ def sol_menu_oku() -> str:
     )
 
     for i, secim in enumerate(secenekler):
-        aktif = st.session_state.get("aktif_sayfa_v37") == secim
+        aktif = st.session_state.get("aktif_sayfa_v38") == secim
         etiket = secim if not aktif else f"✅ {secim}"
         if st.sidebar.button(
             etiket,
-            key=f"menu_btn_v37_{i}",
+            key=f"menu_btn_v38_{i}",
             use_container_width=True,
             type="primary" if aktif else "secondary",
         ):
-            st.session_state["aktif_sayfa_v37"] = secim
-            st.session_state.pop("hedef_sayfa_v37", None)
+            st.session_state["aktif_sayfa_v38"] = secim
+            st.session_state.pop("hedef_sayfa_v38", None)
             st.rerun()
 
-    return st.session_state.get("aktif_sayfa_v37", "🏠 Özet")
+    return st.session_state.get("aktif_sayfa_v38", "🏠 Özet")
 
 def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
     st.sidebar.header("Filtreler")
-    st.sidebar.caption("Filtreler birbirine bağlı çalışır. Bölge → İl → OBM → OİM şeklinde daralır.")
+    st.sidebar.caption("Önce bölge seçilir. Sonra İl → OBM → OİM seçenekleri sırayla açılır.")
 
     uploaded = None
 
@@ -2112,102 +2210,116 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
             return temp_df[temp_df[kolon] == deger]
         return temp_df
 
-    # Önce arama uygulanır, sonra bütün filtre seçenekleri bu arama sonucuna göre daralır.
-    arama = st.sidebar.text_input("Genel arama", placeholder="Parti no, ihale no, Karaçam, tomruk...", key="arama_v7")
+    def key_sifirla(*anahtarlar):
+        for anahtar in anahtarlar:
+            if st.session_state.get(anahtar) != "Tümü":
+                st.session_state[anahtar] = "Tümü"
+
+    arama = st.sidebar.text_input("Genel arama", placeholder="Parti no, ihale no, Karaçam, tomruk...", key="arama_v38")
 
     filtre_aktif = False
     if str(arama or "").strip():
         filtre_aktif = True
 
     sonuc = df.copy()
-
     sonuc = genel_arama_uygula(sonuc, arama)
 
-    # Kademeli filtreleme:
-    # Bölge seçilince OBM seçenekleri sadece o bölgeden gelir.
-    # OBM seçilince OİM seçenekleri sadece o OBM'den gelir.
     bolge = st.sidebar.selectbox(
         "Coğrafi Bölge",
         secenek_kademeli(sonuc, "cografi_bolge"),
-        key="bolge_v7"
+        key="bolge_v38"
     )
     sonuc = uygula_esitlik(sonuc, "cografi_bolge", bolge)
     if bolge != "Tümü":
         filtre_aktif = True
+    else:
+        key_sifirla("il_v38", "obm_v38", "oim_v38", "urun_v38", "agac_v38", "sinif_v38", "boy_v38", "cap_v38")
 
-    il = st.sidebar.selectbox(
-        "İl",
-        secenek_kademeli(sonuc, "il"),
-        key="il_v34"
-    )
-    sonuc = uygula_esitlik(sonuc, "il", il)
-    if il != "Tümü":
-        filtre_aktif = True
+    il = "Tümü"
+    if bolge != "Tümü":
+        il = st.sidebar.selectbox(
+            "İl",
+            secenek_kademeli(sonuc, "il"),
+            key="il_v38"
+        )
+        sonuc = uygula_esitlik(sonuc, "il", il)
+        if il != "Tümü":
+            filtre_aktif = True
+        else:
+            key_sifirla("obm_v38", "oim_v38")
 
-    obm = st.sidebar.selectbox(
-        "OBM",
-        secenek_kademeli(sonuc, "obm"),
-        key="obm_v7"
-    )
-    sonuc = uygula_esitlik(sonuc, "obm", obm)
-    if obm != "Tümü":
-        filtre_aktif = True
+    obm = "Tümü"
+    if bolge != "Tümü" and il != "Tümü":
+        obm = st.sidebar.selectbox(
+            "OBM",
+            secenek_kademeli(sonuc, "obm"),
+            key="obm_v38"
+        )
+        sonuc = uygula_esitlik(sonuc, "obm", obm)
+        if obm != "Tümü":
+            filtre_aktif = True
+        else:
+            key_sifirla("oim_v38")
 
-    oim = st.sidebar.selectbox(
-        "OİM",
-        secenek_kademeli(sonuc, "oim"),
-        key="oim_v7"
-    )
-    sonuc = uygula_esitlik(sonuc, "oim", oim)
-    if oim != "Tümü":
-        filtre_aktif = True
+    oim = "Tümü"
+    if bolge != "Tümü" and il != "Tümü" and obm != "Tümü":
+        oim = st.sidebar.selectbox(
+            "OİM",
+            secenek_kademeli(sonuc, "oim"),
+            key="oim_v38"
+        )
+        sonuc = uygula_esitlik(sonuc, "oim", oim)
+        if oim != "Tümü":
+            filtre_aktif = True
 
-    urun = st.sidebar.selectbox(
-        "Ürün Türü",
-        secenek_kademeli(sonuc, "urun_turu"),
-        key="urun_v7"
-    )
-    sonuc = uygula_esitlik(sonuc, "urun_turu", urun)
-    if urun != "Tümü":
-        filtre_aktif = True
+    if bolge == "Tümü":
+        st.sidebar.info("Detay filtreleri açmak için önce bölge seç.")
+    else:
+        urun = st.sidebar.selectbox(
+            "Ürün Türü",
+            secenek_kademeli(sonuc, "urun_turu"),
+            key="urun_v38"
+        )
+        sonuc = uygula_esitlik(sonuc, "urun_turu", urun)
+        if urun != "Tümü":
+            filtre_aktif = True
 
-    agac = st.sidebar.selectbox(
-        "Ağaç Türü",
-        secenek_kademeli(sonuc, "agac_turu"),
-        key="agac_v7"
-    )
-    sonuc = uygula_esitlik(sonuc, "agac_turu", agac)
-    if agac != "Tümü":
-        filtre_aktif = True
+        agac = st.sidebar.selectbox(
+            "Ağaç Türü",
+            secenek_kademeli(sonuc, "agac_turu"),
+            key="agac_v38"
+        )
+        sonuc = uygula_esitlik(sonuc, "agac_turu", agac)
+        if agac != "Tümü":
+            filtre_aktif = True
 
-    sinif = st.sidebar.selectbox(
-        "Sınıf",
-        secenek_kademeli(sonuc, "sinif"),
-        key="sinif_v7"
-    )
-    sonuc = uygula_esitlik(sonuc, "sinif", sinif)
-    if sinif != "Tümü":
-        filtre_aktif = True
+        sinif = st.sidebar.selectbox(
+            "Sınıf",
+            secenek_kademeli(sonuc, "sinif"),
+            key="sinif_v38"
+        )
+        sonuc = uygula_esitlik(sonuc, "sinif", sinif)
+        if sinif != "Tümü":
+            filtre_aktif = True
 
-    boy = st.sidebar.selectbox(
-        "Boy Kodu",
-        secenek_kademeli(sonuc, "boy_kodu"),
-        key="boy_v7"
-    )
-    sonuc = uygula_esitlik(sonuc, "boy_kodu", boy)
-    if boy != "Tümü":
-        filtre_aktif = True
+        boy = st.sidebar.selectbox(
+            "Boy Kodu",
+            secenek_kademeli(sonuc, "boy_kodu"),
+            key="boy_v38"
+        )
+        sonuc = uygula_esitlik(sonuc, "boy_kodu", boy)
+        if boy != "Tümü":
+            filtre_aktif = True
 
-    cap = st.sidebar.selectbox(
-        "Çap Kodu",
-        secenek_kademeli(sonuc, "cap_kodu"),
-        key="cap_v7"
-    )
-    sonuc = uygula_esitlik(sonuc, "cap_kodu", cap)
-    if cap != "Tümü":
-        filtre_aktif = True
+        cap = st.sidebar.selectbox(
+            "Çap Kodu",
+            secenek_kademeli(sonuc, "cap_kodu"),
+            key="cap_v38"
+        )
+        sonuc = uygula_esitlik(sonuc, "cap_kodu", cap)
+        if cap != "Tümü":
+            filtre_aktif = True
 
-    # Fiyat ve miktar sliderları artık seçilmiş filtrelerden kalan sonuca göre oluşur.
     if not sonuc.empty and "muhammen_birim_fiyat" in sonuc.columns and sonuc["muhammen_birim_fiyat"].notna().any():
         min_f = int(sonuc["muhammen_birim_fiyat"].min())
         max_f = int(sonuc["muhammen_birim_fiyat"].max())
@@ -2221,7 +2333,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
                 max_value=max_f,
                 value=(min_f, max_f),
                 step=100,
-                key="fiyat_v7"
+                key="fiyat_v38"
             )
             if fiyat != (min_f, max_f):
                 filtre_aktif = True
@@ -2243,7 +2355,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
                 max_value=max_m,
                 value=(min_m, max_m),
                 step=1.0,
-                key="miktar_v7"
+                key="miktar_v38"
             )
             if miktar != (min_m, max_m):
                 filtre_aktif = True
@@ -2265,7 +2377,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
                 max_value=max_puan,
                 value=(min_puan, max_puan),
                 step=1,
-                key="puan_v7"
+                key="puan_v38"
             )
             if puan_araligi != (min_puan, max_puan):
                 filtre_aktif = True
@@ -2274,7 +2386,7 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
                 (sonuc["firsat_puani"] <= puan_araligi[1])
             ]
 
-    sadece_supheli = st.sidebar.checkbox("Sadece şüpheli fiyatları göster", key="supheli_v7")
+    sadece_supheli = st.sidebar.checkbox("Sadece şüpheli fiyatları göster", key="supheli_v38")
     if sadece_supheli:
         filtre_aktif = True
         sonuc = sonuc[sonuc["supheli_fiyat"] == True]
@@ -2289,11 +2401,11 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
             "En düşük miktar",
             "Parti no artan",
         ],
-        key="siralama_v7"
+        key="siralama_v38"
     )
 
     if filtre_aktif:
-        st.session_state["hedef_sayfa_v37"] = "🔎 Sonuçlar"
+        st.session_state["hedef_sayfa_v38"] = "🔎 Sonuçlar"
 
     if sonuc.empty:
         return sonuc
@@ -2310,9 +2422,6 @@ def filtrele(df: pd.DataFrame, paket=None) -> pd.DataFrame:
         sonuc = sonuc.sort_values("miktar_m3_hesap", ascending=True)
     elif siralama == "Parti no artan" and "parti_no" in sonuc.columns:
         sonuc = sonuc.sort_values("parti_no", ascending=True)
-
-    if filtre_aktif:
-        st.session_state["hedef_sayfa_v37"] = "🔎 Sonuçlar"
 
     return sonuc
 
@@ -2750,17 +2859,18 @@ if df_raw.empty:
 
 paket = lisans_kontrolu()
 
-takip_kullanici_kodu_al()
+giris_zorunlu()
+kullanici_oturum_karti()
 menu_secimi = sol_menu_oku()
 
 df = hazirla(df_raw)
 takip_hedefini_uygula()
 sonuc = filtrele(df, paket)
 
-if st.session_state.get("hedef_sayfa_v37"):
-    menu_secimi = st.session_state.get("hedef_sayfa_v37")
-    st.session_state["aktif_sayfa_v37"] = menu_secimi
-    st.session_state.pop("hedef_sayfa_v37", None)
+if st.session_state.get("hedef_sayfa_v38"):
+    menu_secimi = st.session_state.get("hedef_sayfa_v38")
+    st.session_state["aktif_sayfa_v38"] = menu_secimi
+    st.session_state.pop("hedef_sayfa_v38", None)
 
 st.caption(f"Okunan dosya: **{okunacak_csv}** — Arama kutusunda parti no, ihale no, ürün, il, OİM ve OBM yazabilirsin.")
 
@@ -2790,8 +2900,8 @@ if menu_secimi == "🏠 Özet":
         <span class="quick-chip">🌲 Tomruk sarı</span>
         <span class="quick-chip">🔵 Maden direği mavi</span>
         <span class="quick-chip">🔴 Kağıtlık kırmızı</span>
-        <span class="quick-chip">📌 Takip ayrı ekran</span>
-        <span class="quick-chip">🚨 Alarm ayrı ekran</span>
+        <span class="quick-chip">⚡ Sonuç odaklı hızlı kullanım</span>
+        <span class="quick-chip">🔐 Kullanıcı girişi aktif</span>
         """,
         unsafe_allow_html=True,
     )
@@ -2846,14 +2956,6 @@ elif menu_secimi == "⭐ Fırsat Panosu":
     one_cikanlar(sonuc)
     st.divider()
     urun_bazli_firsat_panosu(sonuc)
-
-elif menu_secimi == "📌 Takip Listesi":
-    bolum_basligi("📌 Takip Listesi", "Mevcut filtreyi kaydet, kayıtlı takiplerine geri dön ve alarm şartlarını yönet.")
-    takip_listesi_panosu(df)
-
-elif menu_secimi == "🚨 Alarm Merkezi":
-    bolum_basligi("🚨 Alarm Merkezi", "Takip listesinde belirlediğin fiyat, miktar ve fırsat puanı şartlarına uyan kayıtlar.")
-    alarm_merkezi_panosu(df)
 
 elif menu_secimi == "🆕 Yeni Kayıtlar":
     bolum_basligi("🆕 Yeni Kayıtlar", "Son veri güncellemesinde gelen kayıtlar ve onların fırsat özeti.")
